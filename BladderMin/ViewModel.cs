@@ -56,7 +56,7 @@ namespace VMS.TPS
         //Initialize some variables to hold the Eclipse related data that will be bound to the UI.
         public string PatientId { get; set; }
         public string StructureSetId { get; set; }
-        public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>() { "Design1", "Design2" };
+        public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>() { "Design1", "Design2", "Design3" };
         public string BladderContour { get; set; } = "Design1";
         public List<string> ProtocolList { get; private set; } = new List<string>();
 
