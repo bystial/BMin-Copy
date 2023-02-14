@@ -42,6 +42,9 @@ namespace VMS.TPS
             // Instead, have Execute call a method that takes elements you can get from either the standalone or scriptcontext (like Patient and PlanSetup) so you can call (and debug) it from the standalone PluginTester without having to make any changes
             // to the Script class itself.
 
+            //Initialize the Serilogger
+            Helpers.SeriLog.Initialize(context.CurrentUser.Id);
+
             // The ESAPI worker needs to be created in the main thread
             var esapiWorker = new EsapiWorker(context.PlanSetup, context.Patient);
 

@@ -9,23 +9,36 @@ using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
 using System.Reflection;
 using System.ComponentModel;
+using Serilog;
+using System.Diagnostics;
 
 namespace VMS.TPS
 {
     //Methods and classes that help do things to simplify code
     public static class Helpers
     {
-        //Logs a message everytime the script is run.
-        public static class Logger
+        public static class SeriLog
         {
-            private static string logpath = @"\\sdappvimg004\esapi$\klawyer\V15PluginTester\TestScript\Logs\";
-            public static void AddLog(string log_entry)
+            //A class for logging errors and exceptions into a log file that can then be read by the user.
+            public static void Initialize(string user = "RunFromLauncher")
             {
-                string path = Path.Combine(logpath, string.Format("log_{0}_{1}.txt", DateTime.Now.ToShortDateString(), DateTime.Now.ToString("hh_mm")));
-                using (var data = new StreamWriter(path, true))
-                {
-                    data.WriteLine(log_entry);
-                }
+                var SessionTimeStart = DateTime.Now;
+                var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var directory = Path.Combine(AssemblyPath, @"Logs");
+                var logpath = Path.Combine(directory, string.Format(@"log_{0}_{1}_{2}.txt", SessionTimeStart.ToString("dd-MMM-yyyy"), SessionTimeStart.ToString("hh-mm-ss"), user.Replace(@"\", @"_")));
+                Log.Logger = new LoggerConfiguration().WriteTo.File(logpath, Serilog.Events.LogEventLevel.Information, 
+                    "{Timestamp:dd-MMM-yyy HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}").CreateLogger();
+            }
+            public static void AddLog(string logInfo)
+            {
+                Log.Information(logInfo);
+            }
+            public static void AddError(string logInfo, Exception ex = null)
+            {
+                if (ex == null)
+                    Log.Error(logInfo);
+                else
+                    Log.Error(ex, logInfo);
             }
         }
 

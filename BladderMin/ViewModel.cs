@@ -128,7 +128,7 @@ namespace VMS.TPS
             }
             catch (Exception ex)
             {
-                Helpers.Logger.AddLog(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
+                Helpers.SeriLog.AddError(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
                 MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", ex.Message, ex.InnerException, ex.StackTrace));
             }
         }
@@ -143,6 +143,7 @@ namespace VMS.TPS
 
         public async void Start(object param = null)
         {
+            Helpers.Serilog.AddLog("BladderMin application started.");
             ButtonEnabled = false;
             ScriptWorking = true;
 
@@ -157,6 +158,7 @@ namespace VMS.TPS
                 Structure bladder = pl.StructureSet.Structures.FirstOrDefault(x => x.Id == BladderContour);
                 if (bladder == null)
                 {
+                    Helpers.SeriLog.AddError("Could not find bladder contour.");
                     StatusMessage = string.Format("Bladder contour not found! Please select a Bladder contour.");
                     StatusColour = WarningColour;
                     ButtonEnabled = true;
@@ -303,7 +305,7 @@ namespace VMS.TPS
                 string message = string.Format("VHigh is {0}, VInt is {1}, VLow is {2}. Margins are: sup {3}mm and ant {4}mm. Volume is {5}cc", blaMinVHigh, blaMinVInt, blaMinVLow, supMargin - 1, antMargin, blaMinVol);
                 MessageBox.Show(message);
                 ButtonEnabled = true;
-                
+                Helpers.SeriLog.AddLog("BladderMin application finished. Bladdermin structure created successfully.");
             }));
         }
     }
