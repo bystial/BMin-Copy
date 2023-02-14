@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:VMS.TPS.Converters"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
-        Title="BladderMin v1.0" Height="500" Width="450" ResizeMode="NoResize">
+        Title="BladderMin v1.0" Height="425" Width="450" ResizeMode="NoResize">
     <Window.Resources>
         <converters:VisibilityConverter x:Key="VisibilityConverter"/>
         <converters:BoolToString x:Key="BoolToString"/>
@@ -91,30 +91,41 @@
         <Grid Grid.Row="3" Margin="5,0,15,10" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Border Grid.Row="0" CornerRadius="5,5,5,5" Background="CornflowerBlue" HorizontalAlignment="Stretch" Height="25">
                 <TextBlock Text="Constraint Summary" Margin="10,0,0,0" Foreground="White" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
             </Border>
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
+                <ListView Grid.Column="0" ItemsSource="{Binding ConstraintList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
+                <ListBox Grid.Column="1" ItemsSource="{Binding ConstraintValList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
             </Grid>
+            <Border Grid.Row="2" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
         </Grid> 
+        
+        <!--Display Bladdermin volume -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal">
+            <Label Content="BladderMin volume (cc):" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
+            <TextBlock Text="{Binding BlaMinVol, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+        </StackPanel>
 
-        <!--Button and progress bar-->
+        <!--Button-->
         <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Border Grid.Column="1" Margin="10,0,15,15" CornerRadius="3,3,3,3" Height="30" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="LightSteelBlue">
+            <Border Grid.Column="1" Margin="10,0,15,15" CornerRadius="3,3,3,3" Height="30" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="PapayaWhip">
                 <Button Style="{StaticResource ButtonStyle}" Command="{Binding StartCommand}" Width="Auto" IsEnabled="{Binding ButtonEnabled, UpdateSourceTrigger=PropertyChanged}">
                     <TextBlock Text="Create BladderMin!" FontSize="14" FontWeight="Bold" Margin="5,0,5,0" Foreground="Black"/>
                 </Button>
             </Border>
+            
             <!-- Progress bar and script status-->
             <Grid Grid.Row="0">
                 <Grid.RowDefinitions>
@@ -122,7 +133,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <ListView ItemsSource="{Binding ConstraintList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Tomato"/>
+                
                 <Border Grid.Row="1" CornerRadius="5,5,5,5" Margin="10,0,15,15" HorizontalAlignment="Stretch" Background="{Binding StatusColour}">
                     <TextBlock Text="{Binding StatusMessage, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Background="Transparent"/>
                 </Border>

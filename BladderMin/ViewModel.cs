@@ -57,11 +57,13 @@ namespace VMS.TPS
         public string PatientId { get; set; }
         public string StructureSetId { get; set; }
         public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>() { "Design1", "Design2", "Design3" };
-        public string BladderContour { get; set; } = "Design1";
+        public string BladderContour { get; set; } = "Bladder";
         public List<string> ProtocolList { get; private set; } = new List<string>();
 
         public List<string> ConstraintList { get; private set; } = new List<string>() { "DesignConstraint1", "DesignConstraint2" };
+        public List<string> ConstraintValList { get; private set; } = new List<string>() { "DesignConstraintVal","DesignCOnstraintVal2"};
         public string SelectedProtocol { get; set; }
+        public string BlaMinVol { get; set; }
 
         //Variables for UI related bindings
         public string StatusMessage { get; set; } = "Design Time";
@@ -143,7 +145,7 @@ namespace VMS.TPS
 
         public async void Start(object param = null)
         {
-            Helpers.Serilog.AddLog("BladderMin application started.");
+            Helpers.SeriLog.AddLog("BladderMin application started.");
             ButtonEnabled = false;
             ScriptWorking = true;
 
