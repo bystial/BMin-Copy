@@ -70,7 +70,28 @@ namespace VMS.TPS
             }
 
         }
-        
+
+        public static void GetDVHValues (PlanSetup pl, PlanSum planSum, Structure bladderMin, DoseValue dHigh, DoseValue dInt, DoseValue dLow, out double blaMinVHigh, out double blaMinVInt, out double blaMinVLow)
+        {
+            if (planSum != null)
+            {
+                planSum.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
+
+                blaMinVHigh = planSum.GetVolumeAtDose(bladderMin, dHigh, VolumePresentation.Relative);
+                blaMinVInt = planSum.GetVolumeAtDose(bladderMin, dInt, VolumePresentation.Relative);
+                blaMinVLow = planSum.GetVolumeAtDose(bladderMin, dLow, VolumePresentation.Relative);
+            }
+            else
+            {
+                //Get Dose constraint values.
+                pl.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
+                blaMinVHigh = pl.GetVolumeAtDose(bladderMin, dHigh, VolumePresentation.Relative);
+                blaMinVInt = pl.GetVolumeAtDose(bladderMin, dInt, VolumePresentation.Relative);
+                blaMinVLow = pl.GetVolumeAtDose(bladderMin, dLow, VolumePresentation.Relative);
+            }
+        }
+
+
 
     }
 }

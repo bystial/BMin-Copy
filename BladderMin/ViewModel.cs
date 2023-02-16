@@ -56,17 +56,17 @@ namespace VMS.TPS
         //Initialize some variables to hold the Eclipse related data that will be bound to the UI.
         public string PatientId { get; set; }
         public string StructureSetId { get; set; }
-        public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>() { "Design1", "Design2", "Design3" };
+        public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>(); //{ "Design1", "Design2", "Design3" };
         public string BladderContour { get; set; } = "Bladder";
         public List<string> ProtocolList { get; private set; } = new List<string>();
 
-        public List<string> ConstraintList { get; private set; } = new List<string>() { "DesignConstraint1", "DesignConstraint2" };
-        public List<string> ConstraintValList { get; private set; } = new List<string>() { "DesignConstraintVal","DesignCOnstraintVal2"};
+        public List<string> ConstraintList { get; private set; } = new List<string>(); //{ "DesignConstraint1", "DesignConstraint2" };
+        public List<string> ConstraintValList { get; private set; } = new List<string>(); //{ "DesignConstraintVal","DesignCOnstraintVal2"};
         public string SelectedProtocol { get; set; }
         public string BlaMinVol { get; set; }
 
         //Variables for UI related bindings
-        public string StatusMessage { get; set; } = "Design Time";
+        public string StatusMessage { get; set; } //= "Design Time";
         public bool ScriptWorking { get; set; } = false;
         public bool ButtonEnabled { get; set; } = true;
 
@@ -187,10 +187,13 @@ namespace VMS.TPS
                 double vLow = 50;
 
                 Structure lowDoseIso = null;
+
+                //Find the plan sum if there is one.
+                PlanSum planSum = pl.Course.PlanSums.FirstOrDefault();
+
                 //Define low dose isodose structure
-                if (pl.Course.PlanSums != null)
+                if (planSum != null)
                 {
-                    PlanSum planSum = pl.Course.PlanSums.FirstOrDefault();
                     lowDoseIso = planSum.StructureSet.AddStructure("CONTROL", "lowDoseIso");
                     lowDoseIso.ConvertDoseLevelToStructure(planSum.Dose, new DoseValue(6000, DoseValue.DoseUnit.cGy)); //Update when dose constraint changed.
                     lowDoseIso.ConvertToHighResolution();
@@ -202,7 +205,6 @@ namespace VMS.TPS
                     lowDoseIso.ConvertToHighResolution();
                 }
 
-
                 //Define DoseValues for the constraints
                 DoseValue dHigh = new DoseValue(7000, DoseValue.DoseUnit.cGy);
                 DoseValue dInt = new DoseValue(6000, DoseValue.DoseUnit.cGy);
@@ -212,12 +214,13 @@ namespace VMS.TPS
                 double supMargin = 0; //in mm
                 double antMargin = 0;
 
-                //Can remove once testing complete and no need to report back on values for testing.
+                //Define placeholders for bladdermin constraints.
                 double blaMinVol = 0;
                 double blaMinVHigh = 0;
                 double blaMinVInt = 0;
                 double blaMinVLow = 0;
 
+                List<string> blaMinConstraints = new List<string>() { };
 
                //---------------------------------------------------------------------------------------------------------------------------------
                //Initiate volume reduction loop based on volume constraints at each iteration being met.
@@ -236,27 +239,11 @@ namespace VMS.TPS
                     //Get Bladdermin volume. Can remove later if testing passes.
                     blaMinVol = bladderMin.Volume;
 
-                    if (pl.Course.PlanSums != null)
-                    {
-                        PlanSum planSum = pl.Course.PlanSums.FirstOrDefault();
-                        planSum.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
-
-                        blaMinVHigh = planSum.GetVolumeAtDose(bladderMin, dHigh, VolumePresentation.Relative);
-                        blaMinVInt = planSum.GetVolumeAtDose(bladderMin, dInt, VolumePresentation.Relative);
-                        blaMinVLow = planSum.GetVolumeAtDose(bladderMin, dLow, VolumePresentation.Relative);
-                    }
-                    else
-                    {
-                        //Get Dose constraint values.
-                        pl.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
-                        blaMinVHigh = pl.GetVolumeAtDose(bladderMin, dHigh, VolumePresentation.Relative);
-                        blaMinVInt = pl.GetVolumeAtDose(bladderMin, dInt, VolumePresentation.Relative);
-                        blaMinVLow = pl.GetVolumeAtDose(bladderMin, dLow, VolumePresentation.Relative);
-                    }
-
+                    //Get DVH values for bladdermin
+                    Helpers.GetDVHValues(pl,planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
                     //Compare bladdermin constraint values to bladder constraints.
-                    if (blaMinVInt > vInt || blaMinVHigh > vHigh || blaMinVol < 80) 
+                    if (blaMinVInt > vInt || blaMinVHigh > vHigh ||  blaMinVol < 80) 
                     {
                         constraintsMet = false;
                         if (supMargin != 0)
@@ -274,23 +261,16 @@ namespace VMS.TPS
                         //Get dose constraints.
                         blaMinVol = bladderMin.Volume;
 
-                        if (pl.Course.PlanSums != null)
-                        {
-                            PlanSum planSum = pl.Course.PlanSums.FirstOrDefault();
-                            planSum.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
+                        //Get DVH values for bladdermin
+                        Helpers.GetDVHValues(pl, planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
-                            blaMinVHigh = planSum.GetVolumeAtDose(bladderMin, dHigh, VolumePresentation.Relative);
-                            blaMinVInt = planSum.GetVolumeAtDose(bladderMin, dInt, VolumePresentation.Relative);
-                            blaMinVLow = planSum.GetVolumeAtDose(bladderMin, dLow, VolumePresentation.Relative);
-                        }
-                        else
-                        {
-                            pl.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
-                            blaMinVHigh = pl.GetVolumeAtDose(bladderMin, dHigh, VolumePresentation.Relative);
-                            blaMinVInt = pl.GetVolumeAtDose(bladderMin, dInt, VolumePresentation.Relative);
-                            blaMinVLow = pl.GetVolumeAtDose(bladderMin, dLow, VolumePresentation.Relative);
-                        }
+                        //Summarize constraints and volume to the GUI.
+                        blaMinConstraints.Add(blaMinVHigh.ToString("#.00"));
+                        blaMinConstraints.Add(blaMinVInt.ToString("#.00"));
+                        blaMinConstraints.Add(blaMinVLow.ToString("#.00"));
 
+                        ConstraintValList = blaMinConstraints;
+                        BlaMinVol = blaMinVol.ToString("#.00");
                     }
                     supMargin += 1;
                }
@@ -304,9 +284,10 @@ namespace VMS.TPS
                 ScriptWorking = false;
                 StatusMessage = string.Format("Bladdermin structure created.");
                 StatusColour = ScriptDoneColour;
-                string message = string.Format("VHigh is {0}, VInt is {1}, VLow is {2}. Margins are: sup {3}mm and ant {4}mm. Volume is {5}cc", blaMinVHigh, blaMinVInt, blaMinVLow, supMargin - 1, antMargin, blaMinVol);
-                MessageBox.Show(message);
-                ButtonEnabled = true;
+                //Message box used for testing purposes only.
+                //string message = string.Format("VHigh is {0}, VInt is {1}, VLow is {2}. Margins are: sup {3}mm and ant {4}mm. Volume is {5}cc", blaMinVHigh, blaMinVInt, blaMinVLow, supMargin - 1, antMargin, blaMinVol);
+                //MessageBox.Show(message);
+                ButtonEnabled = false;
                 Helpers.SeriLog.AddLog("BladderMin application finished. Bladdermin structure created successfully.");
             }));
         }
