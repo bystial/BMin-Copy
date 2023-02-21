@@ -54,15 +54,16 @@ namespace VMS.TPS
     {
 
         //Initialize some variables to hold the Eclipse related data that will be bound to the UI.
-        public string PatientId { get; set; }
         public string StructureSetId { get; set; }
+        public ObservableCollection<string> PlanList { get; private set; } = new ObservableCollection<string>(); //{"DesignPlan1", "DesignPlan2" };
         public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>(); //{ "Design1", "Design2", "Design3" };
         public string BladderContour { get; set; } = "Bladder";
         public List<string> ProtocolList { get; private set; } = new List<string>();
 
-        public List<string> ConstraintList { get; private set; } = new List<string>(); //{ "DesignConstraint1", "DesignConstraint2" };
-        public List<string> ConstraintValList { get; private set; } = new List<string>(); //{ "DesignConstraintVal","DesignCOnstraintVal2"};
+        public List<string> ConstraintList { get; private set; } = new List<string>() { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
+        public List<string> ConstraintValList { get; private set; } = new List<string>() { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
         public string SelectedProtocol { get; set; }
+        public string SelectedPlanOrSum { get; set; }
         public string BlaMinVol { get; set; }
 
         //Variables for UI related bindings
@@ -92,11 +93,13 @@ namespace VMS.TPS
         {
             try
             {
-                string currentPatientId = "";
                 string currentStructureSetId = "";
 
+                List<string> plans = new List<string>();
+                List<string> planSums = new List<string>();
                 List<string> structures = new List<string>();
                 ObservableCollection<string> structureList = new ObservableCollection<string>();
+                ObservableCollection<string> planList = new ObservableCollection<string>();
                 List<string> protocols = new List<string>()
                 {
                     {"Prostate 60 Gy in 20#" },
@@ -110,19 +113,28 @@ namespace VMS.TPS
                 {
                     p.BeginModifications();
                     //Get basic patient information and initialize drop down menu variables.
-                    currentPatientId = p.Id;
                     currentStructureSetId = pl.StructureSet.Id;
+                    plans = pl.Course.PlanSetups.Select(x => x.Id).ToList();
+                    planSums = pl.Course.PlanSums.Select(x=> x.Id).ToList();
                     structures = pl.StructureSet.Structures.Select(x => x.Id).ToList();
                     foreach (string structureId in structures)
                     {
                         structureList.Add(structureId);
                     }
+                    foreach(string planId in plans)
+                    {
+                        planList.Add(planId);
+                    }
+                    foreach (string planSumId in planSums)
+                    {
+                        planList.Add(planSumId);
+                    }   
                 }
                 ));
                 if (Done)
                 {
-                    PatientId = currentPatientId;
                     StructureSetId = currentStructureSetId;
+                    PlanList = planList;
                     StructureList = structureList;
                     ProtocolList = protocols;
                     ScriptWorking = false;
@@ -236,7 +248,7 @@ namespace VMS.TPS
                     //Find overlap of bladder and low dose structure and then OR it with the bladdermin to add that back to the bladdermin structure. 
                     bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
 
-                    //Get Bladdermin volume. Can remove later if testing passes.
+                    //Get bladdermin volume.
                     blaMinVol = bladderMin.Volume;
 
                     //Get DVH values for bladdermin
@@ -258,7 +270,7 @@ namespace VMS.TPS
                         //Find overlap of bladder and low dose isodose structure and then boolen operator "OR" it with the bladdermin to add that back to the bladdermin structure. 
                         bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
 
-                        //Get dose constraints.
+                        //Get bladdermin volume.
                         blaMinVol = bladderMin.Volume;
 
                         //Get DVH values for bladdermin
