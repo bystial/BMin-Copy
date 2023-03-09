@@ -55,7 +55,8 @@ namespace VMS.TPS
 
         //Initialize some variables to hold the Eclipse related data that will be bound to the UI.
         public string StructureSetId { get; set; }
-        public ObservableCollection<string> PlanList { get; private set; } = new ObservableCollection<string>(); //{"DesignPlan1", "DesignPlan2" };
+        public string PlanId { get; set; }
+        public ObservableCollection<string> PlanSumList { get; private set; } = new ObservableCollection<string>(); //{"DesignPlan1", "DesignPlan2" };
         public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>(); //{ "Design1", "Design2", "Design3" };
         public string BladderContour { get; set; } = "Bladder";
         public List<string> ProtocolList { get; private set; } = new List<string>();
@@ -63,7 +64,7 @@ namespace VMS.TPS
         public List<string> ConstraintList { get; private set; } = new List<string>() { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
         public List<string> ConstraintValList { get; private set; } = new List<string>() { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
         public string SelectedProtocol { get; set; }
-        public string SelectedPlanOrSum { get; set; }
+        public string SelectedPlanSum { get; set; }
         public string BlaMinVol { get; set; }
 
         //Variables for UI related bindings
@@ -94,7 +95,7 @@ namespace VMS.TPS
             try
             {
                 string currentStructureSetId = "";
-
+                string currentPlanId = "";
                 List<string> plans = new List<string>();
                 List<string> planSums = new List<string>();
                 List<string> structures = new List<string>();
@@ -114,6 +115,7 @@ namespace VMS.TPS
                     p.BeginModifications();
                     //Get basic patient information and initialize drop down menu variables.
                     currentStructureSetId = pl.StructureSet.Id;
+                    currentPlanId = pl.Id;
                     plans = pl.Course.PlanSetups.Select(x => x.Id).ToList();
                     planSums = pl.Course.PlanSums.Select(x=> x.Id).ToList();
                     structures = pl.StructureSet.Structures.Select(x => x.Id).ToList();
@@ -121,20 +123,25 @@ namespace VMS.TPS
                     {
                         structureList.Add(structureId);
                     }
-                    foreach(string planId in plans)
-                    {
-                        planList.Add(planId);
-                    }
                     foreach (string planSumId in planSums)
                     {
                         planList.Add(planSumId);
-                    }   
+                    } 
+                    if(plans == null)
+                    {
+                        StatusMessage = string.Format("There is no plan. Ensure a plan is in scope before running script.");
+                        StatusColour = WarningColour;
+                        ButtonEnabled = false;
+                        ScriptWorking = false;
+                        Helpers.SeriLog.AddError("There is no plan. Ensure a plan is in scope before running script.");
+                        return;
+                    }
                 }
                 ));
                 if (Done)
                 {
                     StructureSetId = currentStructureSetId;
-                    PlanList = planList;
+                    PlanSumList = planList;
                     StructureList = structureList;
                     ProtocolList = protocols;
                     ScriptWorking = false;
@@ -170,6 +177,7 @@ namespace VMS.TPS
             {
                 //Get bladder structure.
                 Structure bladder = pl.StructureSet.Structures.FirstOrDefault(x => x.Id == BladderContour);
+                //Checks that the user selected a bladder contour.
                 if (bladder == null)
                 {
                     Helpers.SeriLog.AddError("Could not find bladder contour.");
@@ -181,12 +189,29 @@ namespace VMS.TPS
                 }
 
                 //Bladder high res structure to ensure that the high res structure is being worked on.
-                Structure bladderHiRes = pl.StructureSet.AddStructure("CONTROL", "bladHiRes_AUTO");
+                string blaHiresName = "bladHiRes_AUTO";
+                if (Helpers.CheckStructureExists(pl, blaHiresName))
+                {
+                    StatusMessage = string.Format("'{0}' already exists. Please delete or rename strcuture before running the script again.", blaHiresName);
+                    StatusColour = WarningColour;
+                    ButtonEnabled = false;
+                    ScriptWorking = false;
+                    return;
+                }
+                Structure bladderHiRes = pl.StructureSet.AddStructure("CONTROL", blaHiresName);
                 bladderHiRes.SegmentVolume = bladder.SegmentVolume;
                 bladderHiRes.ConvertToHighResolution(); //Make a high res structure. Better clinically for DVH estimates close to PTV structures etc. 
 
                 //Create Bladdermin_AUTO structure.
                 string bladderMinName = "Bladdermin_AUTO";
+                if(Helpers.CheckStructureExists(pl, bladderMinName))
+                {
+                    StatusMessage = string.Format("'{0}' already exists. Please delete or rename strcuture before running the script again.", bladderMinName);
+                    StatusColour = WarningColour;
+                    ButtonEnabled = false;
+                    ScriptWorking = false;
+                    return;
+                }
                 Structure bladderMin = pl.StructureSet.AddStructure("CONTROL", bladderMinName);
                 bladderMin.ConvertToHighResolution(); //Make a high res structure. Better clinically for DVH estimates close to PTV structures etc.
                 bladderMin.SegmentVolume = bladderHiRes.SegmentVolume;
@@ -201,7 +226,7 @@ namespace VMS.TPS
                 Structure lowDoseIso = null;
 
                 //Find the plan sum if there is one.
-                PlanSum planSum = pl.Course.PlanSums.FirstOrDefault();
+                PlanSum planSum = pl.Course.PlanSums.FirstOrDefault(x => x.Id == SelectedPlanSum);
 
                 //Define low dose isodose structure
                 if (planSum != null)

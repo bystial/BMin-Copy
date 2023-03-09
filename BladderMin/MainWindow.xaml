@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:VMS.TPS.Converters"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
-        Title="BladderMin v1.0" Height="455" Width="450" ResizeMode="NoResize">
+        Title="BladderMin v1.0" Height="500" Width="450" ResizeMode="NoResize">
     <Window.Resources>
         <converters:VisibilityConverter x:Key="VisibilityConverter"/>
         <converters:BoolToString x:Key="BoolToString"/>
@@ -55,19 +55,20 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <Label Content="Current plan:" FontSize="14" FontWeight="Normal" VerticalContentAlignment="Center" />
+                <TextBlock Text="{Binding PlanId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
                 <Label Content="Current structure set:" FontSize="14" FontWeight="Normal" VerticalContentAlignment="Center" />
                 <TextBlock Text="{Binding StructureSetId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </StackPanel>
-           <StackPanel Grid.Row="1" Orientation="Horizontal">
-                <Label Content="Select Plan or Plan Sum:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center" />
-                <ComboBox ItemsSource="{Binding PlanList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" SelectedItem="{Binding SelectedPlanOrSum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
-            </StackPanel> 
             <Border Grid.Row="2" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,10"/>
         </Grid>
 
         <!-- User input section-->
         <Grid Grid.Row="1" Margin="10,5,15,10" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -78,18 +79,22 @@
                 <TextBlock Text="Protocol selection" Margin="10,0,0,0" Foreground="White" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
             </Border>
             <StackPanel Grid.Row="1" Orientation="Horizontal">
-                <Label Content="Select Bladder Contour:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
-                <ComboBox ItemsSource="{Binding StructureList, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding BladderContour, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
-            </StackPanel>
-            <StackPanel Grid.Row="2" Orientation="Horizontal">
                 <Label Content="Select Protocol:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
                 <ComboBox ItemsSource="{Binding ProtocolList, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding SelectedProtocol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5" />
             </StackPanel>
+            <StackPanel Grid.Row="2" Orientation="Horizontal">
+                <Label Content="Select Plan Sum:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center" />
+                <ComboBox ItemsSource="{Binding PlanSumList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" SelectedItem="{Binding SelectedPlanSum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
+            </StackPanel>
             <StackPanel Grid.Row="3" Orientation="Horizontal">
+                <Label Content="Select Bladder Contour:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding StructureList, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding BladderContour, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
+            </StackPanel>
+            <StackPanel Grid.Row="4" Orientation="Horizontal">
                 <Label Content="Nodes Treated?" FontSize="14" FontWeight="Bold" VerticalContentAlignment="  Center"/>
                 <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsSelected, Converter={StaticResource BoolToString}, Mode=TwoWay}" />
             </StackPanel>
-            <Border Grid.Row="4" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
+            <Border Grid.Row="5" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
         </Grid>
         
         <!-- Constraint Summary space-->
@@ -126,7 +131,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Border Grid.Column="1" Margin="10,0,15,15" CornerRadius="3,3,3,3" Height="30" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="PapayaWhip">
-                <Button Style="{StaticResource ButtonStyle}" Command="{Binding StartCommand}" Width="Auto" IsEnabled="{Binding ButtonEnabled, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding ButtonEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Button Style="{StaticResource ButtonStyle}" Command="{Binding StartCommand}" Width="Auto" IsEnabled="{Binding ButtonEnabled, UpdateSourceTrigger=PropertyChanged}">
                     <TextBlock Text="Create BladderMin!" FontSize="14" FontWeight="Bold" Margin="5,0,5,0" Foreground="Black"/>
                 </Button>
             </Border>
