@@ -100,12 +100,11 @@ namespace VMS.TPS
                 List<string> planSums = new List<string>();
                 List<string> structures = new List<string>();
                 ObservableCollection<string> structureList = new ObservableCollection<string>();
-                ObservableCollection<string> planList = new ObservableCollection<string>();
+                ObservableCollection<string> planSumList = new ObservableCollection<string>();
                 List<string> protocols = new List<string>()
                 {
                     {"Prostate 60 Gy in 20#" },
                     {"Prostate 70 Gy in 28#" },
-                    {"Prostate 76 Gy in 38# 3-phase" },
                     {"Prostate 78 Gy in 39# 2-phase" },
                     {"Prostate SABR 36.25 Gy in 5#" }
                 };
@@ -125,9 +124,19 @@ namespace VMS.TPS
                     }
                     foreach (string planSumId in planSums)
                     {
-                        planList.Add(planSumId);
+                        planSumList.Add(planSumId);
                     } 
-                    if(plans == null)
+
+                }
+                ));
+                if (Done)
+                {
+                    StructureSetId = currentStructureSetId;
+                    PlanSumList = planSumList;
+                    StructureList = structureList;
+                    ProtocolList = protocols;
+                    ScriptWorking = false;
+                    if (plans == null)
                     {
                         StatusMessage = string.Format("There is no plan. Ensure a plan is in scope before running script.");
                         StatusColour = WarningColour;
@@ -136,15 +145,6 @@ namespace VMS.TPS
                         Helpers.SeriLog.AddError("There is no plan. Ensure a plan is in scope before running script.");
                         return;
                     }
-                }
-                ));
-                if (Done)
-                {
-                    StructureSetId = currentStructureSetId;
-                    PlanSumList = planList;
-                    StructureList = structureList;
-                    ProtocolList = protocols;
-                    ScriptWorking = false;
                 }
             }
             catch (Exception ex)
@@ -218,10 +218,62 @@ namespace VMS.TPS
 
 
                 //-------------------------------------------------------------------------------------------------------------
-                //Define the 3 level volume dose constraints based on bladder constraints
-                double vHigh = 25; //Needs to be written as an actual % (ie. 1% not 0.01)
-                double vInt = 50;
-                double vLow = 50;
+                //Define the volume dose constraints based on bladder constraints for each of the different protocols
+                double vHigh = 0; //Volume recieving high dose level
+                double vInt = 0;  //Volume receiving intermediate dose level
+                double vLow = 0;  //Volume receiving low dose level
+                double doseHigh = 0;  //Used for dose levels 
+                double doseInt = 0;
+                double doseLow = 0;
+
+                if(SelectedProtocol == "Prostate 60 Gy in 20#")
+                {
+                    vHigh = 25; //Needs to be written as an actual % (ie. 1% not 0.01)
+                    vInt = 50;
+                    vLow = 50;
+                    doseHigh = 6000;
+                    doseInt = 4800;
+                    doseLow = 3800;
+
+                }
+                if(SelectedProtocol == "Prostate 70 Gy in 28#")
+                {
+                    if(IsSelected) //Toggle box for nodal coverage
+                    {
+                        vHigh = 25;
+                        vLow = 50;
+                        doseHigh = 6500;
+                        doseLow = 5600;
+                    }
+                    vHigh = 25; 
+                    vInt = 50;
+                    doseHigh = 6500;
+                    doseInt = 4700;
+                }
+                if (SelectedProtocol == "Prostate 78 Gy in 39# 2-phase")
+                {
+                    if (IsSelected) //Toggle box for nodal coverage
+                    {
+                        vHigh = 25;
+                        vLow = 50;
+                        doseHigh = 7000;
+                        doseLow = 6000;
+                    }
+                    vHigh = 25;
+                    vInt = 50;
+                    doseHigh = 7000;
+                    doseInt = 5000;
+                }
+                if (SelectedProtocol == "Prostate SABR 36.25 Gy in 5#")
+                {
+                    vHigh = 5; 
+                    vInt = 10;
+                    vLow = 30;
+                    doseHigh = 3600;
+                    doseInt = 3300;
+                    doseLow = 1800;
+                }
+
 
                 Structure lowDoseIso = null;
 

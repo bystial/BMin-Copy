@@ -71,6 +71,7 @@ namespace VMS.TPS
 
         }
 
+        //Gets DVH values based on either a plan or a plan sum.
         public static void GetDVHValues (PlanSetup pl, PlanSum planSum, Structure bladderMin, DoseValue dHigh, DoseValue dInt, DoseValue dLow, out double blaMinVHigh, out double blaMinVInt, out double blaMinVLow)
         {
             if (planSum != null)
