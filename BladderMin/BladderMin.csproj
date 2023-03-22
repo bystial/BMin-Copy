@@ -99,6 +99,8 @@
     <Compile Include="Converters.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="ObservableObject.cs" />
+    <Compile Include="Protocol.cs" />
     <Compile Include="Script.cs" />
     <Compile Include="ViewModel.cs" />
     <Page Include="MainWindow.xaml">

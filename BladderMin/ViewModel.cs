@@ -1,10 +1,9 @@
-﻿using PropertyChanged;
+﻿using BladderMin;
+using PropertyChanged;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -16,37 +15,6 @@ using VMS.TPS.Common.Model.Types;
 
 namespace VMS.TPS
 {
-    public abstract class ObservableObject : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-        protected void RaisePropertyChangedEvent([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private bool _isSelected;
-        public bool IsSelected
-        {
-            get
-            {
-                return _isSelected;
-            }
-            set
-            {
-                if (_isSelected == value)
-                    return;
-
-                _isSelected = value;
-                {
-                    _isSelected = value;
-                }
-            }
-        }
-    }
 
     [AddINotifyPropertyChangedInterface]
 
@@ -173,7 +141,6 @@ namespace VMS.TPS
             StatusMessage = "Running...";
             StatusColour = new SolidColorBrush(Colors.Transparent);
 
-
             await Task.Run(() => ew.AsyncRun((p, pl) =>
             {
                 //Get bladder structure.
@@ -222,19 +189,20 @@ namespace VMS.TPS
 
                 //-------------------------------------------------------------------------------------------------------------
                 //Define placeholders for dose values and volume constraints for each protocol and then get the actual values for the user selected protocol.
-                double vHigh = 0; //Volume recieving high dose level
-                double vInt = 0;  //Volume receiving intermediate dose level
-                double vLow = 0;  //Volume receiving low dose level
-                double dLowIso = 0; //Relative dose as a double needed for the low dose isodose structure
+                //double vHigh = 0; //Volume recieving high dose level
+                //double vInt = 0;  //Volume receiving intermediate dose level
+                //double vLow = 0;  //Volume receiving low dose level
+                //double dLowIso = 0; //Relative dose as a double needed for the low dose isodose structure
 
-                DoseValue dHigh = new DoseValue(0, DoseValue.DoseUnit.cGy);
-                DoseValue dInt = new DoseValue(0, DoseValue.DoseUnit.cGy);
-                DoseValue dLow = new DoseValue(0, DoseValue.DoseUnit.cGy);
+                //DoseValue dHigh = new DoseValue(0, DoseValue.DoseUnit.cGy);
+                //DoseValue dInt = new DoseValue(0, DoseValue.DoseUnit.cGy);
+                //DoseValue dLow = new DoseValue(0, DoseValue.DoseUnit.cGy);
 
-                List<string> protocolConstraints = new List<string>();
-                Helpers.GetProtocolValues(SelectedProtocol, IsSelected, ref vHigh, ref vInt, ref vLow, ref dLowIso, ref dHigh, ref dInt, ref dLow, protocolConstraints);
-                ConstraintList = protocolConstraints;
-
+                // List<string> protocolConstraints = new List<string>();
+                Protocol protocol = new Protocol(SelectedProtocol, IsSelected);
+                //Helpers.GetProtocolValues(SelectedProtocol, IsSelected, ref vHigh, ref vInt, ref vLow, ref dLowIso, ref dHigh, ref dInt, ref dLow, protocolConstraints);
+                ConstraintList = protocol.ProtocolConstraints;
+           
                 //------------------------------------------------------------------------------------------------------------------
                 //Create and define low dose isodose structure
                 Structure lowDoseIso = null;
@@ -243,7 +211,7 @@ namespace VMS.TPS
                 PlanSum planSum = pl.Course.PlanSums.FirstOrDefault(x => x.Id == SelectedPlanSum);
 
                 //Define low dose isodose structure
-                lowDoseIso = Helpers.CreateLowDoseIsoStructure(pl, dLowIso, dLow, planSum);
+                lowDoseIso = Helpers.CreateLowDoseIsoStructure(pl, protocol.dLowIso, protocol.dLow, planSum);
 
                 //------------------------------------------------------------------------------------------------------------------------
                 //Define margins and constraints (so you can call them outside the loop if needed).
@@ -276,12 +244,13 @@ namespace VMS.TPS
                     blaMinVol = bladderMin.Volume;
 
                     //Get DVH values for bladdermin
-                    Helpers.GetDVHValues(pl, planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                     Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+
 
                     //Compare bladdermin constraint values to bladder constraints.
                     if(SelectedProtocol == "Prostate 70 Gy in 28#" || SelectedProtocol == "Prostate 78 Gy in 39# 2-phase")
                     {
-                        if (blaMinVLow > vLow || blaMinVHigh > vHigh || blaMinVol < 80)
+                        if (blaMinVLow > protocol.vLow || blaMinVHigh > protocol.vHigh || blaMinVol < 80)
                         {
                             constraintsMet = false;
                             if (supMargin != 0)
@@ -300,7 +269,7 @@ namespace VMS.TPS
                             blaMinVol = bladderMin.Volume;
 
                             //Get DVH values for bladdermin
-                            Helpers.GetDVHValues(pl, planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                            Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
                             //Summarize constraints and volume to the GUI.
                             blaMinConstraints.Add(blaMinVHigh.ToString("#.0"));
@@ -312,7 +281,7 @@ namespace VMS.TPS
                     }
                     if(SelectedProtocol == "Prostate 60 Gy in 20#" || SelectedProtocol == "Prostate SABR 36.25 Gy in 5#")
                     {
-                        if (blaMinVLow > vLow || blaMinVInt > vInt || blaMinVHigh > vHigh || blaMinVol < 80)
+                        if (blaMinVLow > protocol.vLow || blaMinVInt > protocol.vInt || blaMinVHigh > protocol.vHigh || blaMinVol < 80)
                         {
                             constraintsMet = false;
                             if (supMargin != 0)
@@ -331,7 +300,7 @@ namespace VMS.TPS
                             blaMinVol = bladderMin.Volume;
 
                             //Get DVH values for bladdermin
-                            Helpers.GetDVHValues(pl, planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                            Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
                             //Summarize constraints and volume to the GUI.
                             blaMinConstraints.Add(blaMinVHigh.ToString("#.0"));

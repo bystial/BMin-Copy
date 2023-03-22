@@ -42,7 +42,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -83,8 +83,8 @@
                 <ComboBox ItemsSource="{Binding ProtocolList, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding SelectedProtocol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5" />
             </StackPanel>
             <StackPanel Grid.Row="2" Orientation="Horizontal">
-                <Label Content="Select Plan Sum:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center" />
-                <ComboBox ItemsSource="{Binding PlanSumList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" SelectedItem="{Binding SelectedPlanSum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
+                <Label Content="Select Plan Sum:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding PlanSumList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"  SelectedItem="{Binding SelectedPlanSum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
             </StackPanel>
             <StackPanel Grid.Row="3" Orientation="Horizontal">
                 <Label Content="Select Bladder Contour:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
