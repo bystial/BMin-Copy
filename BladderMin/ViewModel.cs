@@ -61,8 +61,8 @@ namespace VMS.TPS
         public string BladderContour { get; set; } = "Bladder";
         public List<string> ProtocolList { get; private set; } = new List<string>();
 
-        public List<string> ConstraintList { get; private set; } = new List<string>() { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
-        public List<string> ConstraintValList { get; private set; } = new List<string>() { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
+        public List<string> ConstraintList { get; private set; } = new List<string>(); //{ "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
+        public List<string> ConstraintValList { get; private set; } = new List<string>(); //{ "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
         public string SelectedProtocol { get; set; }
         public string SelectedPlanSum { get; set; }
         public string BlaMinVol { get; set; }
@@ -133,6 +133,7 @@ namespace VMS.TPS
                 {
                     StructureSetId = currentStructureSetId;
                     PlanSumList = planSumList;
+                    PlanId = currentPlanId;
                     StructureList = structureList;
                     ProtocolList = protocols;
                     ScriptWorking = false;
@@ -193,6 +194,7 @@ namespace VMS.TPS
                 if (Helpers.CheckStructureExists(pl, blaHiresName))
                 {
                     StatusMessage = string.Format("'{0}' already exists. Please delete or rename strcuture before running the script again.", blaHiresName);
+                    Helpers.SeriLog.AddError("Temp structure already exists. Please delete or rename structure before running the script again");
                     StatusColour = WarningColour;
                     ButtonEnabled = false;
                     ScriptWorking = false;
@@ -204,101 +206,46 @@ namespace VMS.TPS
 
                 //Create Bladdermin_AUTO structure.
                 string bladderMinName = "Bladdermin_AUTO";
-                if(Helpers.CheckStructureExists(pl, bladderMinName))
+                if (Helpers.CheckStructureExists(pl, bladderMinName))
                 {
                     StatusMessage = string.Format("'{0}' already exists. Please delete or rename strcuture before running the script again.", bladderMinName);
+                    Helpers.SeriLog.AddError("Bladdermin_AUTO structure already exists. Please delete or rename structure before running the script again");
                     StatusColour = WarningColour;
                     ButtonEnabled = false;
                     ScriptWorking = false;
                     return;
                 }
                 Structure bladderMin = pl.StructureSet.AddStructure("CONTROL", bladderMinName);
-                bladderMin.ConvertToHighResolution(); //Make a high res structure. Better clinically for DVH estimates close to PTV structures etc.
+                bladderMin.ConvertToHighResolution();
                 bladderMin.SegmentVolume = bladderHiRes.SegmentVolume;
 
 
                 //-------------------------------------------------------------------------------------------------------------
-                //Define the volume dose constraints based on bladder constraints for each of the different protocols
+                //Define placeholders for dose values and volume constraints for each protocol and then get the actual values for the user selected protocol.
                 double vHigh = 0; //Volume recieving high dose level
                 double vInt = 0;  //Volume receiving intermediate dose level
                 double vLow = 0;  //Volume receiving low dose level
-                double doseHigh = 0;  //Used for dose levels 
-                double doseInt = 0;
-                double doseLow = 0;
+                double dLowIso = 0; //Relative dose as a double needed for the low dose isodose structure
 
-                if(SelectedProtocol == "Prostate 60 Gy in 20#")
-                {
-                    vHigh = 25; //Needs to be written as an actual % (ie. 1% not 0.01)
-                    vInt = 50;
-                    vLow = 50;
-                    doseHigh = 6000;
-                    doseInt = 4800;
-                    doseLow = 3800;
+                DoseValue dHigh = new DoseValue(0, DoseValue.DoseUnit.cGy);
+                DoseValue dInt = new DoseValue(0, DoseValue.DoseUnit.cGy);
+                DoseValue dLow = new DoseValue(0, DoseValue.DoseUnit.cGy);
 
-                }
-                if(SelectedProtocol == "Prostate 70 Gy in 28#")
-                {
-                    if(IsSelected) //Toggle box for nodal coverage
-                    {
-                        vHigh = 25;
-                        vLow = 50;
-                        doseHigh = 6500;
-                        doseLow = 5600;
-                    }
-                    vHigh = 25; 
-                    vInt = 50;
-                    doseHigh = 6500;
-                    doseInt = 4700;
-                }
-                if (SelectedProtocol == "Prostate 78 Gy in 39# 2-phase")
-                {
-                    if (IsSelected) //Toggle box for nodal coverage
-                    {
-                        vHigh = 25;
-                        vLow = 50;
-                        doseHigh = 7000;
-                        doseLow = 6000;
-                    }
-                    vHigh = 25;
-                    vInt = 50;
-                    doseHigh = 7000;
-                    doseInt = 5000;
-                }
-                if (SelectedProtocol == "Prostate SABR 36.25 Gy in 5#")
-                {
-                    vHigh = 5; 
-                    vInt = 10;
-                    vLow = 30;
-                    doseHigh = 3600;
-                    doseInt = 3300;
-                    doseLow = 1800;
-                }
+                List<string> protocolConstraints = new List<string>();
+                Helpers.GetProtocolValues(SelectedProtocol, IsSelected, ref vHigh, ref vInt, ref vLow, ref dLowIso, ref dHigh, ref dInt, ref dLow, protocolConstraints);
+                ConstraintList = protocolConstraints;
 
-
+                //------------------------------------------------------------------------------------------------------------------
+                //Create and define low dose isodose structure
                 Structure lowDoseIso = null;
 
                 //Find the plan sum if there is one.
                 PlanSum planSum = pl.Course.PlanSums.FirstOrDefault(x => x.Id == SelectedPlanSum);
 
                 //Define low dose isodose structure
-                if (planSum != null)
-                {
-                    lowDoseIso = planSum.StructureSet.AddStructure("CONTROL", "lowDoseIso");
-                    lowDoseIso.ConvertDoseLevelToStructure(planSum.Dose, new DoseValue(6000, DoseValue.DoseUnit.cGy)); //Update when dose constraint changed.
-                    lowDoseIso.ConvertToHighResolution();
-                }
-                else
-                {
-                    lowDoseIso = pl.StructureSet.AddStructure("CONTROL", "lowDoseIso");
-                    lowDoseIso.ConvertDoseLevelToStructure(pl.Dose, new DoseValue(64.1, DoseValue.DoseUnit.Percent)); //Update when dose constraint changed.
-                    lowDoseIso.ConvertToHighResolution();
-                }
+                lowDoseIso = Helpers.CreateLowDoseIsoStructure(pl, dLowIso, dLow, planSum);
 
-                //Define DoseValues for the constraints
-                DoseValue dHigh = new DoseValue(7000, DoseValue.DoseUnit.cGy);
-                DoseValue dInt = new DoseValue(6000, DoseValue.DoseUnit.cGy);
-                DoseValue dLow = new DoseValue(5000, DoseValue.DoseUnit.cGy);
-
+                //------------------------------------------------------------------------------------------------------------------------
                 //Define margins and constraints (so you can call them outside the loop if needed).
                 double supMargin = 0; //in mm
                 double antMargin = 0;
@@ -311,13 +258,13 @@ namespace VMS.TPS
 
                 List<string> blaMinConstraints = new List<string>() { };
 
-               //---------------------------------------------------------------------------------------------------------------------------------
-               //Initiate volume reduction loop based on volume constraints at each iteration being met.
-               bool constraintsMet = true;
+                //---------------------------------------------------------------------------------------------------------------------------------
+                //Initiate volume reduction loop based on volume constraints at each iteration being met.
+                bool constraintsMet = true;
 
-               while(constraintsMet)
-               {
-                    antMargin = Math.Ceiling((supMargin / 3)); 
+                while (constraintsMet)
+                {
+                    antMargin = Math.Ceiling((supMargin / 3));
                     //Get margins with respect to patient orientation and perform the volume reduction
                     AxisAlignedMargins margins = Helpers.ConvertMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
                     bladderMin.SegmentVolume = bladderHiRes.SegmentVolume.AsymmetricMargin(margins);
@@ -329,45 +276,79 @@ namespace VMS.TPS
                     blaMinVol = bladderMin.Volume;
 
                     //Get DVH values for bladdermin
-                    Helpers.GetDVHValues(pl,planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                    Helpers.GetDVHValues(pl, planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
                     //Compare bladdermin constraint values to bladder constraints.
-                    if (blaMinVInt > vInt || blaMinVHigh > vHigh ||  blaMinVol < 80) 
+                    if(SelectedProtocol == "Prostate 70 Gy in 28#" || SelectedProtocol == "Prostate 78 Gy in 39# 2-phase")
                     {
-                        constraintsMet = false;
-                        if (supMargin != 0)
+                        if (blaMinVLow > vLow || blaMinVHigh > vHigh || blaMinVol < 80)
                         {
-                            supMargin -= 1; //Sets up to take the previous iteration that passed before failing constraints.
+                            constraintsMet = false;
+                            if (supMargin != 0)
+                            {
+                                supMargin -= 1; //Sets up to take the previous iteration that passed before failing constraints.
+                            }
+                            antMargin = Math.Ceiling((supMargin / 3));
+
+                            margins = Helpers.ConvertMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
+                            bladderMin.SegmentVolume = bladderHiRes.SegmentVolume.AsymmetricMargin(margins);
+
+                            //Find overlap of bladder and low dose isodose structure and then boolen operator "OR" it with the bladdermin to add that back to the bladdermin structure. 
+                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
+
+                            //Get bladdermin volume.
+                            blaMinVol = bladderMin.Volume;
+
+                            //Get DVH values for bladdermin
+                            Helpers.GetDVHValues(pl, planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+
+                            //Summarize constraints and volume to the GUI.
+                            blaMinConstraints.Add(blaMinVHigh.ToString("#.0"));
+                            blaMinConstraints.Add(blaMinVLow.ToString("#.0"));
+
+                            ConstraintValList = blaMinConstraints;
+                            BlaMinVol = blaMinVol.ToString("#.00");
                         }
-                        antMargin = Math.Ceiling((supMargin / 3));
+                    }
+                    if(SelectedProtocol == "Prostate 60 Gy in 20#" || SelectedProtocol == "Prostate SABR 36.25 Gy in 5#")
+                    {
+                        if (blaMinVLow > vLow || blaMinVInt > vInt || blaMinVHigh > vHigh || blaMinVol < 80)
+                        {
+                            constraintsMet = false;
+                            if (supMargin != 0)
+                            {
+                                supMargin -= 1; //Sets up to take the previous iteration that passed before failing constraints.
+                            }
+                            antMargin = Math.Ceiling((supMargin / 3));
 
-                        margins = Helpers.ConvertMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
-                        bladderMin.SegmentVolume = bladderHiRes.SegmentVolume.AsymmetricMargin(margins);
+                            margins = Helpers.ConvertMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
+                            bladderMin.SegmentVolume = bladderHiRes.SegmentVolume.AsymmetricMargin(margins);
 
-                        //Find overlap of bladder and low dose isodose structure and then boolen operator "OR" it with the bladdermin to add that back to the bladdermin structure. 
-                        bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
+                            //Find overlap of bladder and low dose isodose structure and then boolen operator "OR" it with the bladdermin to add that back to the bladdermin structure. 
+                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
 
-                        //Get bladdermin volume.
-                        blaMinVol = bladderMin.Volume;
+                            //Get bladdermin volume.
+                            blaMinVol = bladderMin.Volume;
 
-                        //Get DVH values for bladdermin
-                        Helpers.GetDVHValues(pl, planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                            //Get DVH values for bladdermin
+                            Helpers.GetDVHValues(pl, planSum, bladderMin, dHigh, dInt, dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
-                        //Summarize constraints and volume to the GUI.
-                        blaMinConstraints.Add(blaMinVHigh.ToString("#.00"));
-                        blaMinConstraints.Add(blaMinVInt.ToString("#.00"));
-                        blaMinConstraints.Add(blaMinVLow.ToString("#.00"));
+                            //Summarize constraints and volume to the GUI.
+                            blaMinConstraints.Add(blaMinVHigh.ToString("#.0"));
+                            blaMinConstraints.Add(blaMinVInt.ToString("#.0"));
+                            blaMinConstraints.Add(blaMinVLow.ToString("#.0"));
 
-                        ConstraintValList = blaMinConstraints;
-                        BlaMinVol = blaMinVol.ToString("#.00");
+                            ConstraintValList = blaMinConstraints;
+                            BlaMinVol = blaMinVol.ToString("#.00");
+                        }
                     }
                     supMargin += 1;
-               }
+                }
 
-               //---------------------------------------------------------------------------------------------------------------
-               //Clean up temp structures that are no longer needed
-                pl.StructureSet.RemoveStructure(bladderHiRes); 
-                pl.StructureSet.RemoveStructure(lowDoseIso); 
+                //---------------------------------------------------------------------------------------------------------------
+                //Clean up temp structures that are no longer needed
+                pl.StructureSet.RemoveStructure(bladderHiRes);
+                pl.StructureSet.RemoveStructure(lowDoseIso);
 
                 //Closing statements
                 ScriptWorking = false;

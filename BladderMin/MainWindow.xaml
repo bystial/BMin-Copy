@@ -91,7 +91,7 @@
                 <ComboBox ItemsSource="{Binding StructureList, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding BladderContour, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
             </StackPanel>
             <StackPanel Grid.Row="4" Orientation="Horizontal">
-                <Label Content="Nodes Treated?" FontSize="14" FontWeight="Bold" VerticalContentAlignment="  Center"/>
+                <Label Content="Nodes/Pelvis Treated?" FontSize="14" FontWeight="Bold" VerticalContentAlignment="  Center"/>
                 <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsSelected, Converter={StaticResource BoolToString}, Mode=TwoWay}" />
             </StackPanel>
             <Border Grid.Row="5" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>

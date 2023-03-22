@@ -11,6 +11,7 @@ using System.Reflection;
 using System.ComponentModel;
 using Serilog;
 using System.Diagnostics;
+using System.Windows;
 
 namespace VMS.TPS
 {
@@ -40,6 +41,108 @@ namespace VMS.TPS
                 else
                     Log.Error(ex, logInfo);
             }
+        }
+
+        //Defines dose values and volume constraints based on the user selected protocol
+        public static void GetProtocolValues(string SelectedProtocol, bool IsSelected, ref double vHigh, ref double vInt, ref double vLow, ref double dLowIso, ref DoseValue dHigh, ref DoseValue dInt, ref DoseValue dLow, List<string> protocolConstraints)
+        {
+            if (SelectedProtocol == "Prostate 60 Gy in 20#")
+            {
+                vHigh = 5; //Needs to be written as an actual % (ie. 1% not 0.01)
+                vInt = 25;
+                vLow = 50;
+                dHigh = new DoseValue(6000, DoseValue.DoseUnit.cGy);
+                dInt = new DoseValue(4800, DoseValue.DoseUnit.cGy);
+                dLow = new DoseValue(3800, DoseValue.DoseUnit.cGy);
+                dLowIso = 63.3;
+                SeriLog.AddLog("Protocol selected: Prostate 60 Gy in 20#");
+                protocolConstraints.Add("V60 ≤ 5%");
+                protocolConstraints.Add("V48 ≤ 25%");
+                protocolConstraints.Add("V38 ≤ 50%");
+                return;
+            }
+            if (SelectedProtocol == "Prostate 70 Gy in 28#")
+            {
+                if (IsSelected) //Toggle box for nodal coverage
+                {
+                    vHigh = 25;
+                    vLow = 50;
+                    dLowIso = 80.0;
+                    dHigh = new DoseValue(6500, DoseValue.DoseUnit.cGy);
+                    dLow = new DoseValue(5600, DoseValue.DoseUnit.cGy);
+                    SeriLog.AddLog(string.Format("Protocol selected: Prostate 70 Gy in 28#  \n Nodes treated: Y"));
+                    protocolConstraints.Add("V65 ≤ 25%");
+                    protocolConstraints.Add("V56 ≤ 50%");
+                    return;
+                }
+                vHigh = 25;
+                vLow = 50;
+                dLowIso = 67.1;
+                dHigh = new DoseValue(6500, DoseValue.DoseUnit.cGy);
+                dLow = new DoseValue(4700, DoseValue.DoseUnit.cGy);
+                SeriLog.AddLog(string.Format("Protocol selected: Prostate 70 Gy in 28#  \n Nodes treated: N"));
+                protocolConstraints.Add("V65 ≤ 25%");
+                protocolConstraints.Add("V47 ≤ 50%");
+                return;
+            }
+            if (SelectedProtocol == "Prostate 78 Gy in 39# 2-phase")
+            {
+                if (IsSelected) //Toggle box for nodal coverage
+                {
+                    vHigh = 25;
+                    vLow = 50;
+                    dHigh = new DoseValue(7000, DoseValue.DoseUnit.cGy);
+                    dLow = new DoseValue(6000, DoseValue.DoseUnit.cGy);
+                    SeriLog.AddLog(string.Format("Protocol selected: Prostate 78 Gy in 39# 2-phase  \n Nodes treated: Y"));
+                    protocolConstraints.Add("V70 ≤ 25%");
+                    protocolConstraints.Add("V60 ≤ 50%");
+                    return;
+                }
+                vHigh = 25;
+                vLow = 50;
+                dHigh = new DoseValue(7000, DoseValue.DoseUnit.cGy);
+                dLow = new DoseValue(5000, DoseValue.DoseUnit.cGy);
+                SeriLog.AddLog(string.Format("Protocol selected: Prostate 78 Gy in 39# 2-phase  \n Nodes treated: N"));
+                protocolConstraints.Add("V70 ≤ 25%");
+                protocolConstraints.Add("V56 ≤ 50%");
+                return;
+            }
+            if (SelectedProtocol == "Prostate SABR 36.25 Gy in 5#")
+            {
+                vHigh = 10;
+                vInt = 20;
+                vLow = 45;
+                dLowIso = 49.7;
+                dHigh = new DoseValue(3600, DoseValue.DoseUnit.cGy);
+                dInt = new DoseValue(3300, DoseValue.DoseUnit.cGy);
+                dLow = new DoseValue(1800, DoseValue.DoseUnit.cGy);
+                SeriLog.AddLog("Protocol selected: Prostate SABR 36.25 Gy in 5#");
+                protocolConstraints.Add("V36 ≤ 10%");
+                protocolConstraints.Add("V33 ≤ 20%");
+                protocolConstraints.Add("V18 ≤ 45%");
+                return;
+            }
+            SeriLog.AddError("Protocol not supported.");
+            throw new Exception("Protocol not supported.");
+        }
+
+        public static Structure CreateLowDoseIsoStructure(PlanSetup pl, double dLowIso, DoseValue dLow, PlanSum planSum)
+        {
+            Structure lowDoseIso;
+            if (planSum != null)
+            {
+                lowDoseIso = planSum.StructureSet.AddStructure("CONTROL", "lowDoseIso");
+                lowDoseIso.ConvertDoseLevelToStructure(planSum.Dose, dLow);
+                lowDoseIso.ConvertToHighResolution();
+            }
+            else
+            {
+                lowDoseIso = pl.StructureSet.AddStructure("CONTROL", "lowDoseIso");
+                lowDoseIso.ConvertDoseLevelToStructure(pl.Dose, new DoseValue(dLowIso, DoseValue.DoseUnit.Percent));
+                lowDoseIso.ConvertToHighResolution();
+            }
+
+            return lowDoseIso;
         }
 
         //Checks if a structure already exists.
