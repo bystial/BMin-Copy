@@ -186,21 +186,8 @@ namespace VMS.TPS
                 bladderMin.ConvertToHighResolution();
                 bladderMin.SegmentVolume = bladderHiRes.SegmentVolume;
 
-
-                //-------------------------------------------------------------------------------------------------------------
-                //Define placeholders for dose values and volume constraints for each protocol and then get the actual values for the user selected protocol.
-                //double vHigh = 0; //Volume recieving high dose level
-                //double vInt = 0;  //Volume receiving intermediate dose level
-                //double vLow = 0;  //Volume receiving low dose level
-                //double dLowIso = 0; //Relative dose as a double needed for the low dose isodose structure
-
-                //DoseValue dHigh = new DoseValue(0, DoseValue.DoseUnit.cGy);
-                //DoseValue dInt = new DoseValue(0, DoseValue.DoseUnit.cGy);
-                //DoseValue dLow = new DoseValue(0, DoseValue.DoseUnit.cGy);
-
                 // List<string> protocolConstraints = new List<string>();
                 Protocol protocol = new Protocol(SelectedProtocol, IsSelected);
-                //Helpers.GetProtocolValues(SelectedProtocol, IsSelected, ref vHigh, ref vInt, ref vLow, ref dLowIso, ref dHigh, ref dInt, ref dLow, protocolConstraints);
                 ConstraintList = protocol.ProtocolConstraints;
            
                 //------------------------------------------------------------------------------------------------------------------
@@ -245,7 +232,6 @@ namespace VMS.TPS
 
                     //Get DVH values for bladdermin
                      Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
-
 
                     //Compare bladdermin constraint values to bladder constraints.
                     if(SelectedProtocol == "Prostate 70 Gy in 28#" || SelectedProtocol == "Prostate 78 Gy in 39# 2-phase")
