@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:VMS.TPS.Converters"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
-        Title="BladderMin v1.0" Height="500" Width="450" ResizeMode="NoResize">
+        Title="BladderMin v1.0" Height="550" Width="450" ResizeMode="NoResize">
     <Window.Resources>
         <converters:VisibilityConverter x:Key="VisibilityConverter"/>
         <converters:BoolToString x:Key="BoolToString"/>
@@ -42,9 +42,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="118.36"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="65"/>
         </Grid.RowDefinitions>
 
         <!-- Display plan data -->
@@ -96,7 +96,7 @@
             </StackPanel>
             <Border Grid.Row="5" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
         </Grid>
-        
+
         <!-- Constraint Summary space-->
         <Grid Grid.Row="2" Margin="5,0,15,10" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
@@ -109,20 +109,35 @@
             </Border>
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <ListView Grid.Column="0" ItemsSource="{Binding ConstraintList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
+                <ListView Grid.Column="0" ItemsSource="{Binding ConstraintList}" Foreground="Black" FontSize="14"/>
                 <ListBox Grid.Column="1" ItemsSource="{Binding ConstraintValList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
             </Grid>
             <Border Grid.Row="2" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
         </Grid>
 
-        <!--Display Bladdermin volume -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal">
-            <Label Content="BladderMin volume (cc):" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
-            <TextBlock Text="{Binding BlaMinVol, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-        </StackPanel>
+        <!--Display Bladdermin volume and margins-->
+        <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <Label Content="BladderMin volume (cc):" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
+                <TextBlock Text="{Binding BlaMinVol, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <Label Content="Sup Margin (mm):" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
+                <TextBlock Text="{Binding SupMargin, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Orientation="Horizontal">
+                <Label Content="Ant Margin (mm):" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
+                <TextBlock Text="{Binding AntMargin, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
 
         <!--Button-->
         <Grid Grid.Row="4">
@@ -137,16 +152,15 @@
             </Border>
 
             <!-- Progress bar and script status-->
-            <Grid Grid.Column="0">
+            <Grid Grid.Column="0" HorizontalAlignment="Center" Width="279">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-
-                <Border Grid.Row="0" CornerRadius="5,5,5,5" Margin="10,0,15,15" HorizontalAlignment="Stretch" Background="{Binding StatusColour}">
+                <Border Grid.Row="0" CornerRadius="5,5,5,5" Margin="10,0,15,13" Background="{Binding StatusColour}">
                     <TextBlock Text="{Binding StatusMessage, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" Background="Transparent"/>
                 </Border>
-                <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Height="15" Margin="10,0,15,15" HorizontalAlignment="Stretch" 
+                <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Height="15" Margin="10,0,15,-15" 
                          IsIndeterminate="True" Visibility="{Binding ScriptWorking, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}"/>
             </Grid>
         </Grid>

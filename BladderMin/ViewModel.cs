@@ -29,11 +29,13 @@ namespace VMS.TPS
         public string BladderContour { get; set; } = "Bladder";
         public List<string> ProtocolList { get; private set; } = new List<string>();
 
-        public List<string> ConstraintList { get; private set; } = new List<string>(); //{ "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
-        public List<string> ConstraintValList { get; private set; } = new List<string>(); //{ "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
+        public List<string> ConstraintList { get; private set; } = new List<string>(); // { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
+        public List<string> ConstraintValList { get; private set; } = new List<string>(); // { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
         public string SelectedProtocol { get; set; }
         public string SelectedPlanSum { get; set; }
         public string BlaMinVol { get; set; }
+        public string SupMargin { get; set; }
+        public string AntMargin { get; set; } 
 
         //Variables for UI related bindings
         public string StatusMessage { get; set; } //= "Design Time";
@@ -204,6 +206,7 @@ namespace VMS.TPS
                 //Define margins and constraints (so you can call them outside the loop if needed).
                 double supMargin = 0; //in mm
                 double antMargin = 0;
+                double infMargin = 0;
 
                 //Define placeholders for bladdermin constraints.
                 double blaMinVol = 0;
@@ -212,6 +215,7 @@ namespace VMS.TPS
                 double blaMinVLow = 0;
 
                 List<string> blaMinConstraints = new List<string>() { };
+                List<string> marginsValues = new List<string>() { };
 
                 //---------------------------------------------------------------------------------------------------------------------------------
                 //Initiate volume reduction loop based on volume constraints at each iteration being met.
@@ -263,6 +267,8 @@ namespace VMS.TPS
 
                             ConstraintValList = blaMinConstraints;
                             BlaMinVol = blaMinVol.ToString("#.00");
+                            SupMargin = supMargin.ToString();
+                            AntMargin = antMargin.ToString();
                         }
                     }
                     if(SelectedProtocol == "Prostate 60 Gy in 20#" || SelectedProtocol == "Prostate SABR 36.25 Gy in 5#")
@@ -295,10 +301,14 @@ namespace VMS.TPS
 
                             ConstraintValList = blaMinConstraints;
                             BlaMinVol = blaMinVol.ToString("#.00");
+                            SupMargin = supMargin.ToString();
+                            AntMargin = antMargin.ToString();
                         }
                     }
                     supMargin += 1;
+
                 }
+                
 
                 //---------------------------------------------------------------------------------------------------------------
                 //Clean up temp structures that are no longer needed
