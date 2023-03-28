@@ -206,7 +206,7 @@ namespace VMS.TPS
                 //Define margins and constraints (so you can call them outside the loop if needed).
                 double supMargin = 0; //in mm
                 double antMargin = 0;
-                double infMargin = 0;
+                double infMargin = 25;
 
                 //Define placeholders for bladdermin constraints.
                 double blaMinVol = 0;
@@ -231,6 +231,11 @@ namespace VMS.TPS
                     //Find overlap of bladder and low dose structure and then OR it with the bladdermin to add that back to the bladdermin structure. 
                     bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
 
+                    //Expand an inf margin then cropped out from the bladder to allow a more clinically relevant bladdermin with less dosimetry post-processing
+                    AxisAlignedMargins infMargins = new AxisAlignedMargins(StructureMarginGeometry.Outer, 0, 0, infMargin, 0, 0, 0);
+                    bladderMin.SegmentVolume = bladderMin.SegmentVolume.AsymmetricMargin(infMargins);
+                    bladderMin.SegmentVolume = bladderMin.SegmentVolume.And(bladderHiRes);
+
                     //Get bladdermin volume.
                     blaMinVol = bladderMin.Volume;
 
@@ -254,6 +259,10 @@ namespace VMS.TPS
 
                             //Find overlap of bladder and low dose isodose structure and then boolen operator "OR" it with the bladdermin to add that back to the bladdermin structure. 
                             bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
+
+                            //Expand an inf margin then cropped out from the bladder to allow a more clinically relevant bladdermin with less dosimetry post-processing
+                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.AsymmetricMargin(infMargins);
+                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.And(bladderHiRes);
 
                             //Get bladdermin volume.
                             blaMinVol = bladderMin.Volume;
@@ -287,6 +296,10 @@ namespace VMS.TPS
 
                             //Find overlap of bladder and low dose isodose structure and then boolen operator "OR" it with the bladdermin to add that back to the bladdermin structure. 
                             bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
+
+                            //Expand an inf margin then cropped out from the bladder to allow a more clinically relevant bladdermin with less dosimetry post-processing
+                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.AsymmetricMargin(infMargins);
+                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.And(bladderHiRes);
 
                             //Get bladdermin volume.
                             blaMinVol = bladderMin.Volume;
