@@ -22,4 +22,13 @@ namespace VMS.TPS
         [Description("PTV created but CTVen may have small subvolume, please review")] SubvolumeWarningCTVen,
 
     }
+
+    public enum BladderMinProtocolTypes
+    {
+        [Description("Prostate 60 Gy in 20#")] Prostate60in20,
+        [Description("Prostate 70 Gy in 28#")] Prostate70in28,
+        [Description("Prostate 78 Gy in 39#")] Prostate78in39,
+        [Description("Prostate SABR 36.25 Gy in 5#")] ProstateSABR,
+
+    }
 }

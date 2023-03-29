@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
+using static VMS.TPS.Helpers;
 
 [assembly: ESAPIScript(IsWriteable = true)]
 
@@ -27,15 +28,61 @@ namespace VMS.TPS
         public ObservableCollection<string> PlanSumList { get; private set; } = new ObservableCollection<string>(); //{"DesignPlan1", "DesignPlan2" };
         public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>(); //{ "Design1", "Design2", "Design3" };
         public string BladderContour { get; set; } = "Bladder";
-        public List<string> ProtocolList { get; private set; } = new List<string>();
+        public List<Protocol> ProtocolList { get; private set; } = new List<Protocol>();
 
         public List<string> ConstraintList { get; private set; } = new List<string>(); // { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
         public List<string> ConstraintValList { get; private set; } = new List<string>(); // { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
-        public string SelectedProtocol { get; set; }
+
+        private Protocol _selectedProtocol;
+        public Protocol SelectedProtocol
+        {
+            get
+            {
+                return _selectedProtocol;
+            }
+            set
+            {
+                _selectedProtocol = value;
+                RaisePropertyChangedEvent(nameof(PlanSumSelectionVisibility));
+                RaisePropertyChangedEvent(nameof(NodalSelectionVisibility));
+            }
+        }
+
+        public Visibility NodalSelectionVisibility
+        {
+            get
+            {
+                if (SelectedProtocol != null)
+                {
+                    if (SelectedProtocol.isNodesTreatable)
+                        return Visibility.Visible;
+                    else
+                        return Visibility.Collapsed;
+                }
+                else
+                    return Visibility.Visible;
+            }
+        }
+
+    public Visibility PlanSumSelectionVisibility
+        {
+            get
+            {
+                if (SelectedProtocol != null)
+                {
+                    if (SelectedProtocol.isMultiPhase)
+                        return Visibility.Visible;
+                    else
+                        return Visibility.Collapsed;
+                }
+                else
+                    return Visibility.Collapsed;
+            }
+        }
         public string SelectedPlanSum { get; set; }
         public string BlaMinVol { get; set; }
         public string SupMargin { get; set; }
-        public string AntMargin { get; set; } 
+        public string AntMargin { get; set; }
 
         //Variables for UI related bindings
         public string StatusMessage { get; set; } //= "Design Time";
@@ -71,13 +118,17 @@ namespace VMS.TPS
                 List<string> structures = new List<string>();
                 ObservableCollection<string> structureList = new ObservableCollection<string>();
                 ObservableCollection<string> planSumList = new ObservableCollection<string>();
-                List<string> protocols = new List<string>()
+                List<BladderMinProtocolTypes> protocolOptions = new List<BladderMinProtocolTypes>()
                 {
-                    {"Prostate 60 Gy in 20#" },
-                    {"Prostate 70 Gy in 28#" },
-                    {"Prostate 78 Gy in 39# 2-phase" },
-                    {"Prostate SABR 36.25 Gy in 5#" }
+                    BladderMinProtocolTypes.Prostate60in20,
+                    BladderMinProtocolTypes.Prostate70in28,
+                    BladderMinProtocolTypes.Prostate78in39,
+                    BladderMinProtocolTypes.ProstateSABR
                 };
+                foreach (var name in protocolOptions)
+                {
+                    ProtocolList.Add(new Protocol(name, false));
+                }
 
                 bool Done = await Task.Run(() => ew.AsyncRun((p, pl) =>
                 {
@@ -86,7 +137,7 @@ namespace VMS.TPS
                     currentStructureSetId = pl.StructureSet.Id;
                     currentPlanId = pl.Id;
                     plans = pl.Course.PlanSetups.Select(x => x.Id).ToList();
-                    planSums = pl.Course.PlanSums.Select(x=> x.Id).ToList();
+                    planSums = pl.Course.PlanSums.Select(x => x.Id).ToList();
                     structures = pl.StructureSet.Structures.Select(x => x.Id).ToList();
                     foreach (string structureId in structures)
                     {
@@ -95,7 +146,7 @@ namespace VMS.TPS
                     foreach (string planSumId in planSums)
                     {
                         planSumList.Add(planSumId);
-                    } 
+                    }
 
                 }
                 ));
@@ -105,7 +156,7 @@ namespace VMS.TPS
                     PlanSumList = planSumList;
                     PlanId = currentPlanId;
                     StructureList = structureList;
-                    ProtocolList = protocols;
+                    //ProtocolList = protocols;
                     ScriptWorking = false;
                     if (plans == null)
                     {
@@ -189,9 +240,9 @@ namespace VMS.TPS
                 bladderMin.SegmentVolume = bladderHiRes.SegmentVolume;
 
                 // List<string> protocolConstraints = new List<string>();
-                Protocol protocol = new Protocol(SelectedProtocol, IsSelected);
+                Protocol protocol = SelectedProtocol;
                 ConstraintList = protocol.ProtocolConstraints;
-           
+
                 //------------------------------------------------------------------------------------------------------------------
                 //Create and define low dose isodose structure
                 Structure lowDoseIso = null;
@@ -240,10 +291,10 @@ namespace VMS.TPS
                     blaMinVol = bladderMin.Volume;
 
                     //Get DVH values for bladdermin
-                     Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                    Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
                     //Compare bladdermin constraint values to bladder constraints.
-                    if(SelectedProtocol == "Prostate 70 Gy in 28#" || SelectedProtocol == "Prostate 78 Gy in 39# 2-phase")
+                    if (SelectedProtocol.Name == "Prostate 70 Gy in 28#" || SelectedProtocol.Name == "Prostate 78 Gy in 39# 2-phase")
                     {
                         if (blaMinVLow > protocol.vLow || blaMinVHigh > protocol.vHigh || blaMinVol < 80)
                         {
@@ -280,7 +331,7 @@ namespace VMS.TPS
                             AntMargin = antMargin.ToString();
                         }
                     }
-                    if(SelectedProtocol == "Prostate 60 Gy in 20#" || SelectedProtocol == "Prostate SABR 36.25 Gy in 5#")
+                    if (SelectedProtocol.Name == "Prostate 60 Gy in 20#" || SelectedProtocol.Name == "Prostate SABR 36.25 Gy in 5#")
                     {
                         if (blaMinVLow > protocol.vLow || blaMinVInt > protocol.vInt || blaMinVHigh > protocol.vHigh || blaMinVol < 80)
                         {
@@ -321,7 +372,7 @@ namespace VMS.TPS
                     supMargin += 1;
 
                 }
-                
+
 
                 //---------------------------------------------------------------------------------------------------------------
                 //Clean up temp structures that are no longer needed
