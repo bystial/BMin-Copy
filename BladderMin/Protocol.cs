@@ -28,9 +28,17 @@ namespace BladderMin
         public bool isNodesTreatable { get; set; } = true;
         public bool isMultiPhase { get; set; } = false;
 
-        public Protocol(BladderMinProtocolTypes selectedProtocolType, bool IsSelected)
+        private bool _isNodesSelected = false;
+
+        private BladderMinProtocolTypes _protocolType;
+        public void SetNodesSelected(bool isNodesSelected)
         {
-            //Instantiate the protocol
+            _isNodesSelected = isNodesSelected;
+            SetContraints();
+        }
+
+        private void SetContraints()
+        {
             vHigh = 0;
             vInt = 0;
             vLow = 0;
@@ -40,7 +48,7 @@ namespace BladderMin
             dLow = new DoseValue(0, DoseValue.DoseUnit.cGy);
             dLowIso = 0;
 
-            switch (selectedProtocolType)
+            switch (_protocolType)
             {
                 case BladderMinProtocolTypes.Prostate60in20:
                     {
@@ -55,11 +63,11 @@ namespace BladderMin
                         dLowIso = 63.3;
 
                         ProtocolConstraints = new List<string>
-                    {
-                        "V60 ≤ 5%",
-                        "V48 ≤ 25%",
-                        "V38 ≤ 50%"
-                    };
+                        {
+                            "V60 ≤ 5%",
+                            "V48 ≤ 25%",
+                            "V38 ≤ 50%"
+                        };
 
                         SeriLog.AddLog("Protocol selected: Prostate 60 Gy in 20#");
                         break;
@@ -67,7 +75,7 @@ namespace BladderMin
                 case BladderMinProtocolTypes.Prostate70in28:
                     {
                         Name = "Prostate 70 Gy in 28#";
-                        if (IsSelected) //Toggle box for nodal coverage
+                        if (_isNodesSelected) //Toggle box for nodal coverage
                         {
                             vHigh = 25;
                             vLow = 50;
@@ -77,10 +85,10 @@ namespace BladderMin
                             dLowIso = 80.0;
 
                             ProtocolConstraints = new List<string>
-                        {
-                            "V65 ≤ 25%",
-                            "V56 ≤ 50%"
-                        };
+                            {
+                                "V65 ≤ 25%",
+                                "V56 ≤ 50%"
+                            };
 
                             SeriLog.AddLog(string.Format("Protocol selected: Prostate 70 Gy in 28#  \n Nodes treated: Y"));
                         }
@@ -94,10 +102,10 @@ namespace BladderMin
                             dLowIso = 67.1;
 
                             ProtocolConstraints = new List<string>
-                        {
-                                "V65 ≤ 25%",
-                                "V47 ≤ 50%"
-                        };
+                            {
+                                    "V65 ≤ 25%",
+                                    "V47 ≤ 50%"
+                            };
                             SeriLog.AddLog(string.Format("Protocol selected: Prostate 70 Gy in 28#  \n Nodes treated: N"));
                         }
                         break;
@@ -107,7 +115,7 @@ namespace BladderMin
                     {
                         Name = "Prostate 78 Gy in 39# (2 phase)";
                         isMultiPhase = true;
-                        if (IsSelected) //Toggle box for nodal coverage
+                        if (_isNodesSelected) //Toggle box for nodal coverage
                         {
                             vHigh = 25;
                             vLow = 50;
@@ -117,13 +125,12 @@ namespace BladderMin
                             dLowIso = 76.9;
 
                             ProtocolConstraints = new List<string>
-                        {
-                            "V70 ≤ 25%",
-                            "V60 ≤ 50%"
-                        };
+                            {
+                                "V70 ≤ 25%",
+                                "V60 ≤ 50%"
+                            };
 
                             SeriLog.AddLog(string.Format("Protocol selected: Prostate 78 Gy in 39# 2-phase  \n Nodes treated: Y"));
-
                         }
                         else
                         {
@@ -135,10 +142,10 @@ namespace BladderMin
                             dLowIso = 64.1;
 
                             ProtocolConstraints = new List<string>
-                        {
-                            "V70 ≤ 25%",
-                            "V56 ≤ 50%"
-                        };
+                            {
+                                "V70 ≤ 25%",
+                                "V50 ≤ 50%"
+                            };
 
                             SeriLog.AddLog(string.Format("Protocol selected: Prostate 78 Gy in 39# 2-phase  \n Nodes treated: N"));
                         }
@@ -146,7 +153,7 @@ namespace BladderMin
                     }
                 case BladderMinProtocolTypes.ProstateSABR:
                     {
-                        Name = "Prostate SABR 36.25Gy in 5#";
+                        Name = "Prostate SABR 36.25 Gy in 5#";
                         isNodesTreatable = false;
                         vHigh = 10;
                         vInt = 20;
@@ -158,11 +165,11 @@ namespace BladderMin
                         dLowIso = 49.7;
 
                         ProtocolConstraints = new List<string>
-                    {
-                        "V36 ≤ 10%",
-                        "V33 ≤ 20%",
-                        "V18 ≤ 45%"
-                    };
+                        {
+                            "V36 ≤ 10%",
+                            "V33 ≤ 20%",
+                            "V18 ≤ 45%"
+                        };
 
                         SeriLog.AddLog("Protocol selected: Prostate SABR 36.25 Gy in 5#");
                         break;
@@ -172,6 +179,14 @@ namespace BladderMin
                         throw new Exception("Unrecognized Protocol");
                     }
             }
+        }
+    
+        public Protocol(BladderMinProtocolTypes selectedProtocolType, bool isNodesSelectedDefault)
+        {
+            //Instantiate the protocol
+            _isNodesSelected = isNodesSelectedDefault;
+            _protocolType = selectedProtocolType;
+            SetContraints();
         }
     }
 }

@@ -18,23 +18,6 @@ namespace VMS.TPS
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private bool _isSelected;
-        public bool IsSelected
-        {
-            get
-            {
-                return _isSelected;
-            }
-            set
-            {
-                if (_isSelected == value)
-                    return;
-
-                _isSelected = value;
-                {
-                    _isSelected = value;
-                }
-            }
-        }
+                
     }
 }

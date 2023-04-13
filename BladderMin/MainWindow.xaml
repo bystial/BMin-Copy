@@ -93,7 +93,7 @@
             </StackPanel>
             <StackPanel Grid.Row="4" Orientation="Horizontal" Visibility="{Binding NodalSelectionVisibility, UpdateSourceTrigger=PropertyChanged}">
                 <Label Content="Nodes/Pelvis Treated?" FontSize="14" FontWeight="Bold" VerticalContentAlignment="  Center"/>
-                <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsSelected, Converter={StaticResource BoolToString}, Mode=TwoWay}" />
+                <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsNodesSelected, Mode=TwoWay}" />
             </StackPanel>
             <Border Grid.Row="5" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
         </Grid>
