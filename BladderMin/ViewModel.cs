@@ -258,14 +258,11 @@ namespace VMS.TPS
                 ConstraintList = protocol.ProtocolConstraints;
 
                 //------------------------------------------------------------------------------------------------------------------
-                //Create and define low dose isodose structure
-                Structure lowDoseIso = null;
-
                 //Find the plan sum if there is one.
                 PlanSum planSum = pl.Course.PlanSums.FirstOrDefault(x => x.Id == SelectedPlanSum);
 
                 //Define low dose isodose structure
-                lowDoseIso = Helpers.CreateLowDoseIsoStructure(pl, protocol.dLowIso, protocol.dLow, planSum);
+                Structure lowDoseIso = Helpers.CreateLowDoseIsoStructure(pl, protocol, planSum);
 
                 //------------------------------------------------------------------------------------------------------------------------
                 //Define margins and constraints (so you can call them outside the loop if needed).
@@ -305,7 +302,7 @@ namespace VMS.TPS
                     blaMinVol = bladderMin.Volume;
 
                     //Get DVH values for bladdermin
-                    Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                    Bladdermin.GetDVHValues(pl, planSum, bladderMin, protocol, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
                     //Compare bladdermin constraint values to bladder constraints.
                     if (protocol.Name == "Prostate 70 Gy in 28#" || protocol.Name == "Prostate 78 Gy in 39# (2 phase)")
@@ -333,7 +330,7 @@ namespace VMS.TPS
                             blaMinVol = bladderMin.Volume;
 
                             //Get DVH values for bladdermin
-                            Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                            Bladdermin.GetDVHValues(pl, planSum, bladderMin, protocol, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
                             //Summarize constraints and volume to the GUI.
                             blaMinConstraints.Add(blaMinVHigh.ToString("#.0"));
@@ -370,7 +367,7 @@ namespace VMS.TPS
                             blaMinVol = bladderMin.Volume;
 
                             //Get DVH values for bladdermin
-                            Helpers.GetDVHValues(pl, planSum, bladderMin, protocol.dHigh, protocol.dInt, protocol.dLow, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
+                            Bladdermin.GetDVHValues(pl, planSum, bladderMin, protocol, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
 
                             //Summarize constraints and volume to the GUI.
                             blaMinConstraints.Add(blaMinVHigh.ToString("#.0"));

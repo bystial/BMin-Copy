@@ -12,6 +12,7 @@ using System.ComponentModel;
 using Serilog;
 using System.Diagnostics;
 using System.Windows;
+using BladderMin;
 
 namespace VMS.TPS
 {
@@ -42,19 +43,19 @@ namespace VMS.TPS
                     Log.Error(ex, logInfo);
             }
         }
-        public static Structure CreateLowDoseIsoStructure(PlanSetup pl, double dLowIso, DoseValue dLow, PlanSum planSum)
+        public static Structure CreateLowDoseIsoStructure(PlanSetup pl, Protocol protocol, PlanSum planSum)
         {
             Structure lowDoseIso;
             if (planSum != null)
             {
                 lowDoseIso = planSum.StructureSet.AddStructure("CONTROL", "lowDoseIso");
-                lowDoseIso.ConvertDoseLevelToStructure(planSum.Dose, dLow);
+                lowDoseIso.ConvertDoseLevelToStructure(planSum.Dose, protocol.dLow);
                 lowDoseIso.ConvertToHighResolution();
             }
             else
             {
                 lowDoseIso = pl.StructureSet.AddStructure("CONTROL", "lowDoseIso");
-                lowDoseIso.ConvertDoseLevelToStructure(pl.Dose, new DoseValue(dLowIso, DoseValue.DoseUnit.Percent));
+                lowDoseIso.ConvertDoseLevelToStructure(pl.Dose, new DoseValue(protocol.dLowIso, DoseValue.DoseUnit.Percent));
                 lowDoseIso.ConvertToHighResolution();
             }
 
@@ -88,27 +89,6 @@ namespace VMS.TPS
                     throw new Exception("This orientation is not currently supported");
             }
 
-        }
-
-        //Gets DVH values based on either a plan or a plan sum
-        public static void GetDVHValues (PlanSetup pl, PlanSum planSum, Structure bladderMin, DoseValue dHigh, DoseValue dInt, DoseValue dLow, out double blaMinVHigh, out double blaMinVInt, out double blaMinVLow)
-        {
-            if (planSum != null)
-            {
-                planSum.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
-
-                blaMinVHigh = planSum.GetVolumeAtDose(bladderMin, dHigh, VolumePresentation.Relative);
-                blaMinVInt = planSum.GetVolumeAtDose(bladderMin, dInt, VolumePresentation.Relative);
-                blaMinVLow = planSum.GetVolumeAtDose(bladderMin, dLow, VolumePresentation.Relative);
-            }
-            else
-            {
-                //Get Dose constraint values.
-                pl.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
-                blaMinVHigh = pl.GetVolumeAtDose(bladderMin, dHigh, VolumePresentation.Relative);
-                blaMinVInt = pl.GetVolumeAtDose(bladderMin, dInt, VolumePresentation.Relative);
-                blaMinVLow = pl.GetVolumeAtDose(bladderMin, dLow, VolumePresentation.Relative);
-            }
         }
     }
 }

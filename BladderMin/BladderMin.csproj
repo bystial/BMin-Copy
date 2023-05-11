@@ -96,6 +96,7 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bladdermin.cs" />
     <Compile Include="Converters.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Extensions.cs" />
