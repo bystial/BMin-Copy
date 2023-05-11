@@ -25,7 +25,6 @@ namespace BladderMin
         public List<string> blaMinConstraints = new List<string>() { };
         public List<string> marginsValues = new List<string>() { };
 
-        private bool _constraintsMet = true;
 
         //Gets DVH values based on either a plan or a plan sum
         public static void GetDVHValues(PlanSetup pl, PlanSum planSum, Structure bladderMin, Protocol protocol, out double blaMinVHigh, out double blaMinVInt, out double blaMinVLow)
@@ -50,8 +49,8 @@ namespace BladderMin
 
         public void ReduceBladderMin(PlanSetup pl, PlanSum planSum, Structure bladdermin, Protocol protocol)
         {
-
-        }
+            private bool _constraintsMet = true;
+    }
 
     }
 }
