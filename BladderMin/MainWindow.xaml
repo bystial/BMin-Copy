@@ -89,16 +89,16 @@
             </StackPanel>
             <StackPanel Grid.Row="3" Orientation="Horizontal" >
                 <Label Content="Select Bladder Contour:" FontSize="14" FontWeight="Bold" VerticalContentAlignment="Center"/>
-                <ComboBox ItemsSource="{Binding StructureList, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding BladderContour, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
+                <ComboBox ItemsSource="{Binding StructureList, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding SelectedBladderContour, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" MinWidth="100" Margin="0,5,0,5"/>
             </StackPanel>
             <StackPanel Grid.Row="4" Orientation="Horizontal" Visibility="{Binding NodalSelectionVisibility, UpdateSourceTrigger=PropertyChanged}">
                 <Label Content="Nodes/Pelvis Treated?" FontSize="14" FontWeight="Bold" VerticalContentAlignment="  Center"/>
                 <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsNodesSelected, Mode=TwoWay}" />
             </StackPanel>
             <Border Grid.Row="5" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
-        </Grid>
+        </Grid> 
 
-        <!-- Constraint Summary space-->
+        <!-- Constraint Summary space--><!--
         <Grid Grid.Row="2" Margin="5,0,15,10" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -113,11 +113,11 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <ListView Grid.Column="0" ItemsSource="{Binding ConstraintList}" Foreground="Black" FontSize="14"/>
+                <ListView Grid.Column="0" ItemsSource="{Binding ProtocolConstraintsList}" Foreground="Black" FontSize="14"/>
                 <ListBox Grid.Column="1" ItemsSource="{Binding ConstraintValList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
             </Grid>
             <Border Grid.Row="2" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
-        </Grid>
+        </Grid>-->
 
         <!--Display Bladdermin volume and margins-->
         <Grid Grid.Row="3">

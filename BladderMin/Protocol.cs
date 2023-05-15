@@ -14,7 +14,6 @@ namespace BladderMin
     {
         //Properties
         public string Name { get; set; }
-
         public double vHigh { get; set; }
         public double vInt { get; set; }
         public double vLow { get; set; }
