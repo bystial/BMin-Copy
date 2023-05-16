@@ -10,33 +10,34 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
         Title="BladderMin v1.0" Height="550" Width="450" ResizeMode="NoResize">
-    <Window.Resources>
-        <converters:VisibilityConverter x:Key="VisibilityConverter"/>
-        <converters:BoolToString x:Key="BoolToString"/>
+
+<Window.Resources>
+    <converters:VisibilityConverter x:Key="VisibilityConverter"/>
+    <converters:BoolToString x:Key="BoolToString"/>
 
         <Style x:Key="ButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="0,0,0,0"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Name="border" BorderThickness="1" Padding="3,2" BorderBrush="Transparent" CornerRadius="3" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="Black"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="0,0,0,0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Name="border" BorderThickness="1" Padding="3,2" BorderBrush="Transparent" CornerRadius="3" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="Black"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -96,9 +97,9 @@
                 <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsNodesSelected, Mode=TwoWay}" />
             </StackPanel>
             <Border Grid.Row="5" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
-        </Grid> 
+        </Grid>
 
-        <!-- Constraint Summary space--><!--
+        <!-- Constraint Summary space-->
         <Grid Grid.Row="2" Margin="5,0,15,10" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -110,14 +111,14 @@
             </Border>
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <ListView Grid.Column="0" ItemsSource="{Binding ProtocolConstraintsList}" Foreground="Black" FontSize="14"/>
-                <ListBox Grid.Column="1" ItemsSource="{Binding ConstraintValList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
+                <ListView Grid.Column="0" ItemsSource="{Binding ProtocolConstraintsList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
+                <ListBox Grid.Column="1" ItemsSource="{Binding ConstraintValuesList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
             </Grid>
             <Border Grid.Row="2" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
-        </Grid>-->
+        </Grid>
 
         <!--Display Bladdermin volume and margins-->
         <Grid Grid.Row="3">
@@ -165,6 +166,5 @@
                          IsIndeterminate="True" Visibility="{Binding ScriptWorking, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}"/>
             </Grid>
         </Grid>
-    </Grid>
-
+    </Grid> 
 </Window>

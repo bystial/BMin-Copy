@@ -13,6 +13,7 @@ namespace BladderMin
     public class BladderminModel
     {
         //Define properties
+        public List<string> protocolConstraintList;
         private List<string> _constraintValList;
         private double _blaMinVol;
         private double _supMargin;
@@ -35,6 +36,8 @@ namespace BladderMin
             _protocol = bladderMinProtocol;
             _bladderStructure = bladderStructure;
             _planSumId = planSumId;
+
+            protocolConstraintList = _protocol.ProtocolConstraints;
         }
 
         public async Task CreateBladderMinStructure()
@@ -63,7 +66,7 @@ namespace BladderMin
                 bladderHiRes.ConvertToHighResolution(); //Make a high res structure. Better clinically for DVH estimates close to PTV structures etc. 
 
                 //Create Bladdermin_AUTO structure.
-                string bladderMinName = "Bladmin_AUTOv1.1";
+                string bladderMinName = "Bladmin_AUTO";
                 if (Helpers.CheckStructureExists(pl, bladderMinName))
                 {
                     string errorMessage = string.Format("'{0}' already exists. Please delete or rename strcuture before running the script again.", bladderMinName);
@@ -73,9 +76,6 @@ namespace BladderMin
                 Structure bladderMin = pl.StructureSet.AddStructure("CONTROL", bladderMinName);
                 bladderMin.ConvertToHighResolution();
                 bladderMin.SegmentVolume = bladderHiRes.SegmentVolume;
-
-               //Retrieves the constraints based on the protocol selected.
-                var ConstraintList = _protocol.ProtocolConstraints;
 
                 //------------------------------------------------------------------------------------------------------------------
                 //Find the plan sum if there is one.

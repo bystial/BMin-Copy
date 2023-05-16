@@ -29,7 +29,7 @@ namespace VMS.TPS
         public string SelectedBladderContour { get; set; } = "Bladder";
         public List<Protocol> ProtocolList { get; private set; } = new List<Protocol>();
         public List<string> ProtocolConstraintsList { get; private set; } = new List<string>(); // { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
-        public List<string> ConstraintValList { get; private set; } = new List<string>(); // { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
+        public List<string> ConstraintValuesList { get; private set; } = new List<string>(); // { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
 
         private bool _isNodesSelected;
         public bool IsNodesSelected  //Allows user to select whether nodes/pelvis is being treated.
@@ -201,7 +201,8 @@ namespace VMS.TPS
             StatusMessage = "Running...";
             StatusColour = new SolidColorBrush(Colors.Transparent);
 
-            var bladderMinModel = new BladderminModel(ew, SelectedProtocol, SelectedBladderContour, SelectedPlanSum); // come back and enter plansum id from bound variable to view
+            var bladderMinModel = new BladderminModel(ew, SelectedProtocol, SelectedBladderContour, SelectedPlanSum); 
+            ProtocolConstraintsList = bladderMinModel.protocolConstraintList;
 
             try
             {
@@ -220,7 +221,7 @@ namespace VMS.TPS
             var results = bladderMinModel.GetResults();
             if (results != null)
             {
-                ConstraintValList = results.Item1;
+                ConstraintValuesList = results.Item1;
                 BlaMinVol = results.Item2.ToString("0.##");
                 SupMargin = results.Item3.ToString();
                 AntMargin = results.Item4.ToString();
