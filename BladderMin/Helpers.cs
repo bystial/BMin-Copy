@@ -73,7 +73,7 @@ namespace VMS.TPS
         }
 
         //Converts margins to align with Patient Orientation
-        public static AxisAlignedMargins ConvertMargins(PatientOrientation patientOrientation, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
+        public static AxisAlignedMargins ConvertInnerMargins(PatientOrientation patientOrientation, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
         {
             switch (patientOrientation)
             {
@@ -85,6 +85,25 @@ namespace VMS.TPS
                     return new AxisAlignedMargins(StructureMarginGeometry.Inner, leftMargin, antMargin, supMargin, rightMargin, postMargin, infMargin);
                 case PatientOrientation.FeetFirstProne:
                     return new AxisAlignedMargins(StructureMarginGeometry.Inner, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);  
+                default:
+                    throw new Exception("This orientation is not currently supported");
+            }
+
+        }
+
+        //Expands margins to align with Patient Orientation
+        public static AxisAlignedMargins ConvertOuterMargins(PatientOrientation patientOrientation, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
+        {
+            switch (patientOrientation)
+            {
+                case PatientOrientation.HeadFirstSupine:
+                    return new AxisAlignedMargins(StructureMarginGeometry.Outer, rightMargin, antMargin, infMargin, leftMargin, postMargin, supMargin);
+                case PatientOrientation.HeadFirstProne:
+                    return new AxisAlignedMargins(StructureMarginGeometry.Outer, leftMargin, postMargin, infMargin, rightMargin, antMargin, supMargin);
+                case PatientOrientation.FeetFirstSupine:
+                    return new AxisAlignedMargins(StructureMarginGeometry.Outer, leftMargin, antMargin, supMargin, rightMargin, postMargin, infMargin);
+                case PatientOrientation.FeetFirstProne:
+                    return new AxisAlignedMargins(StructureMarginGeometry.Outer, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);
                 default:
                     throw new Exception("This orientation is not currently supported");
             }
