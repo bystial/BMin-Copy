@@ -266,7 +266,7 @@ namespace BladderMin
                     {
                         _bigMargin = true;
                         supMargin = 1;
-                        Helpers.SeriLog.AddError("Margins exceed 5cm. Creating a step 2 bladder to continue reduction.");
+                        Helpers.SeriLog.AddError("Margin reduction exceeds 5cm. Creating a step 2 bladder to continue reduction...");
                     }
                 }
                 //---------------------------------------------------------------------------------------------------------------
