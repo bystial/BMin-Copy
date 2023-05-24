@@ -30,12 +30,15 @@ namespace BladderMin
         private bool _isNodesSelected = false;
 
         private BladderMinProtocolTypes _protocolType;
+
+        //A method to indicated whether nodes have been selected by the user and updates the protocol constraints as necessary
         public void SetNodesSelected(bool isNodesSelected)
         {
             _isNodesSelected = isNodesSelected;
             SetContraints();
         }
 
+        //Sets the constraints depending on the protocol selected and whether nodes are selected or not.
         private void SetContraints()
         {
             vHigh = 0;
@@ -180,6 +183,7 @@ namespace BladderMin
             }
         }
     
+        // The Protocol class constructor
         public Protocol(BladderMinProtocolTypes selectedProtocolType, bool isNodesSelectedDefault)
         {
             //Instantiate the protocol

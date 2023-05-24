@@ -93,7 +93,7 @@ namespace BladderMin
 
 
                 //------------------------------------------------------------------------------------------------------------------
-                //Find the plan sum if there is one.
+                //Find the plan sum if there is one. Needed for multi-phase protocols
                 PlanSum planSum = pl.Course.PlanSums.FirstOrDefault(x => x.Id.Equals(_planSumId, StringComparison.CurrentCultureIgnoreCase));
 
                 //Define low dose isodose structure that is needed to ensure the bladdermin structure includes low dose in the bladder.
@@ -101,7 +101,7 @@ namespace BladderMin
 
 
                 //------------------------------------------------------------------------------------------------------------------------
-                //Define margins and constraints (so you can call them outside the loop if needed).
+                //Define margins
                 double supMargin = 0; //in mm
                 double antMargin = 0;
                 double infMargin = 25;
@@ -126,8 +126,8 @@ namespace BladderMin
                     //Get margins with respect to patient orientation and perform the volume reduction
                     AxisAlignedMargins margins = Helpers.ConvertInnerMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
 
-                    //If sup margins extend beyond 5cm, we have to reduce the bladdermin structure based on fixed sup/ant margins from the last bladdermin iteration acting on 
-                    // the bladdermin structure and NOT the bladder structure as previously performed. 
+                    //If sup margins extend beyond 5cm, we have to need to create a step 2 bladder structure from the previous margin reduction in order
+                    // to continue reducing the margins for the final Bladdermin structure 
                     if(_bigMargin == true)
                     {
                         bladderMin.SegmentVolume = step2Bladder.SegmentVolume.AsymmetricMargin(margins);
@@ -165,7 +165,7 @@ namespace BladderMin
                             antMargin = Math.Ceiling((supMargin / 3));
                             margins = Helpers.ConvertInnerMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
 
-                            if (_bigMargin == true)
+                            if (_bigMargin == true) //Differentiates whether it's acting on the original bladderHires structure or the step 2 bladder structure.
                             {
                                 bladderMin.SegmentVolume = step2Bladder.SegmentVolume.AsymmetricMargin(margins);
                             }
@@ -264,7 +264,7 @@ namespace BladderMin
                     }
                     else
                     {
-                        _bigMargin = true;
+                        _bigMargin = true; //Activates a step 2 bladder structure should the sup margin reduction exceed 50mm. 
                         supMargin = 1;
                         Helpers.SeriLog.AddError("Margin reduction exceeds 5cm. Creating a step 2 bladder to continue reduction...");
                     }

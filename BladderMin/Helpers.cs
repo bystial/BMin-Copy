@@ -19,9 +19,9 @@ namespace VMS.TPS
     //Methods and classes that help do things to simplify code
     public static class Helpers
     {
+        //A class for logging errors and exceptions into a log file that can then be read by the user.
         public static class SeriLog
         {
-            //A class for logging errors and exceptions into a log file that can then be read by the user.
             public static void Initialize(string user = "RunFromLauncher")
             {
                 var SessionTimeStart = DateTime.Now;
@@ -43,6 +43,8 @@ namespace VMS.TPS
                     Log.Error(ex, logInfo);
             }
         }
+
+        //Creates a Low Dose Isodose structure used to determine overlap with prescription dose into the bladder.
         public static Structure CreateLowDoseIsoStructure(PlanSetup pl, Protocol protocol, PlanSum planSum)
         {
             Structure lowDoseIso;
@@ -72,7 +74,7 @@ namespace VMS.TPS
             return false;
         }
 
-        //Converts margins to align with Patient Orientation
+        //Converts inner margins to align with Patient Orientation
         public static AxisAlignedMargins ConvertInnerMargins(PatientOrientation patientOrientation, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
         {
             switch (patientOrientation)
@@ -91,7 +93,7 @@ namespace VMS.TPS
 
         }
 
-        //Expands margins to align with Patient Orientation
+        //Converts outer margins to align with Patient Orientation
         public static AxisAlignedMargins ConvertOuterMargins(PatientOrientation patientOrientation, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
         {
             switch (patientOrientation)
