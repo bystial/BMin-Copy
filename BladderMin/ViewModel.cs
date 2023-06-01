@@ -202,33 +202,24 @@ namespace VMS.TPS
             StatusColour = new SolidColorBrush(Colors.Transparent);
 
             var bladderMinModel = new BladderminModel(ew, SelectedProtocol, SelectedBladderContour, SelectedPlanSum); 
-            ProtocolConstraintsList = bladderMinModel.protocolConstraintList;
+            ProtocolConstraintsList = bladderMinModel.protocolConstraintList.Select(x=>x.Name).ToList();
 
-            try
+            var results = await bladderMinModel.CreateBladderMinStructure();
+            
+            if (!results.Success)
             {
-                await bladderMinModel.CreateBladderMinStructure();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = string.Format(ex.Message);
+                StatusMessage = results.Message;
                 StatusColour = FailColour;
                 ButtonEnabled = true;
                 ScriptWorking = false;
                 return;
             }
-
-            //Gets the constraint values, bladdermin volume, and margin results from the BladderminModel and displays it on the GUI.
-            var results = bladderMinModel.GetResults();
-            if (results != null)
-            {
-                ConstraintValuesList = results.Item1;
-                BlaMinVol = results.Item2.ToString("0.##");
-                SupMargin = results.Item3.ToString();
-                AntMargin = results.Item4.ToString();
-            }
             else
             {
-                throw new Exception("GetResults() was hit before the bladdermin structure was created.");
+                ConstraintValuesList = results.ProtocolResult.ConstraintResults.Select(x=>x.Volume.ToString("0.##")).ToList();
+                BlaMinVol = results.BladderMinVol.ToString("0.##");
+                SupMargin = results.SupMargin.ToString();
+                AntMargin = results.AntMargin.ToString();
             }
 
             //Closing statements

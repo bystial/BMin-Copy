@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:VMS.TPS.Converters"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
-        Title="BladderMin v1.0" Height="550" Width="450" ResizeMode="NoResize">
+        Title="BladderMin v1.1" Height="550" Width="450" ResizeMode="NoResize">
 
 <Window.Resources>
     <converters:VisibilityConverter x:Key="VisibilityConverter"/>

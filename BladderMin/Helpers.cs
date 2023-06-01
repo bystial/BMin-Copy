@@ -28,7 +28,7 @@ namespace VMS.TPS
                 var AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 var directory = Path.Combine(AssemblyPath, @"Logs");
                 var logpath = Path.Combine(directory, string.Format(@"log_{0}_{1}_{2}.txt", SessionTimeStart.ToString("dd-MMM-yyyy"), SessionTimeStart.ToString("hh-mm-ss"), user.Replace(@"\", @"_")));
-                Log.Logger = new LoggerConfiguration().WriteTo.File(logpath, Serilog.Events.LogEventLevel.Information, 
+                Log.Logger = new LoggerConfiguration().WriteTo.File(logpath, Serilog.Events.LogEventLevel.Information,
                     "{Timestamp:dd-MMM-yyy HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}").CreateLogger();
             }
             public static void AddLog(string logInfo)
@@ -45,24 +45,26 @@ namespace VMS.TPS
         }
 
         //Creates a Low Dose Isodose structure used to determine overlap with prescription dose into the bladder.
-        public static Structure CreateLowDoseIsoStructure(PlanSetup pl, Protocol protocol, PlanSum planSum)
+        public static Structure CreateLowDoseIsoStructure(PlanningItem doseSource, Protocol protocol)
         {
             Structure lowDoseIso;
-            if (planSum != null)
-            {
-                lowDoseIso = planSum.StructureSet.AddStructure("CONTROL", "lowDoseIso");
-                lowDoseIso.ConvertDoseLevelToStructure(planSum.Dose, protocol.dLow);
-                lowDoseIso.ConvertToHighResolution();
-            }
+            string lowDoseIsoId = "lowDoseIso";
+            lowDoseIso = doseSource.StructureSet.Structures.FirstOrDefault(x => x.Id.Equals(lowDoseIsoId, StringComparison.OrdinalIgnoreCase));
+            if (lowDoseIso == null)
+                lowDoseIso = doseSource.StructureSet.AddStructure("CONTROL", lowDoseIsoId);
+            if (doseSource.DoseValuePresentation == DoseValuePresentation.Absolute)
+                lowDoseIso.ConvertDoseLevelToStructure(doseSource.Dose, protocol.LowDoseConstraintValue);
             else
+                lowDoseIso.ConvertDoseLevelToStructure(doseSource.Dose, new DoseValue(protocol.LowDoseConstraintValue / ((PlanSetup)doseSource).TotalDose * 100, DoseValue.DoseUnit.Percent));
+            if (!lowDoseIso.IsHighResolution)
             {
-                lowDoseIso = pl.StructureSet.AddStructure("CONTROL", "lowDoseIso");
-                lowDoseIso.ConvertDoseLevelToStructure(pl.Dose, new DoseValue(protocol.dLowIso, DoseValue.DoseUnit.Percent));
                 lowDoseIso.ConvertToHighResolution();
             }
-
-            return lowDoseIso;
+            return lowDoseIso; 
         }
+
+
+
 
         //Checks if a structure already exists.
         public static bool CheckStructureExists(PlanSetup planSetup, string structureId)
@@ -86,7 +88,7 @@ namespace VMS.TPS
                 case PatientOrientation.FeetFirstSupine:
                     return new AxisAlignedMargins(StructureMarginGeometry.Inner, leftMargin, antMargin, supMargin, rightMargin, postMargin, infMargin);
                 case PatientOrientation.FeetFirstProne:
-                    return new AxisAlignedMargins(StructureMarginGeometry.Inner, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);  
+                    return new AxisAlignedMargins(StructureMarginGeometry.Inner, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);
                 default:
                     throw new Exception("This orientation is not currently supported");
             }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,17 +12,45 @@ using VMS.TPS.Common.Model.Types;
 
 namespace BladderMin
 {
+
+    public class BladderMinSearchParameters
+    {
+        public double InitialSupMargin;
+        public double InitialAntMargin;
+        public double InitialInfMargin;
+        public double SupMarginIncrement;
+    }
+
+    public struct BladderMinCreationResults
+    {
+        public bool Success;
+        public string Message;
+        public ProtocolResult ProtocolResult;
+        public double SupMargin;
+        public double AntMargin;
+        public double BladderMinVol;
+        public BladderMinCreationResults(bool success, string message, double volume = double.NaN, double supMargin = double.NaN, double antMargin = double.NaN, ProtocolResult protocolResult = new ProtocolResult())
+        {
+            Success = success;
+            Message = message;
+            SupMargin = supMargin;
+            AntMargin = antMargin;
+            ProtocolResult = protocolResult;
+            BladderMinVol = volume;
+        }
+
+    }
+
     public class BladderminModel
     {
         //Define properties
-        public List<string> protocolConstraintList;
+        public List<BladderConstraint> protocolConstraintList;
         private List<string> _constraintValList;
         private double _blaMinVol;
         private double _supMargin;
         private double _antMargin;
 
-        private bool _bigMargin = false; 
-        private bool _bladderMinDone = false;
+        private bool _bigMargin = false;
 
         private Protocol _protocol;
         private string _bladderStructure;
@@ -42,273 +71,202 @@ namespace BladderMin
             protocolConstraintList = _protocol.ProtocolConstraints;
         }
 
-        public async Task CreateBladderMinStructure()
+        public async Task<BladderMinCreationResults> CreateBladderMinStructure()
         {
+            BladderMinCreationResults result = new BladderMinCreationResults(false, "Method did not complete");
             await Task.Run(() => _ew.AsyncRun((p, pl) =>
             {
-                //Get bladder structure.
-                Structure bladder = pl.StructureSet.Structures.FirstOrDefault(x => x.Id == _bladderStructure);
-                //Checks that the user selected a bladder contour.
-                if (bladder == null)
+                try
                 {
-                    Helpers.SeriLog.AddError("Could not find bladder contour.");
-                    throw new Exception("Bladder structure cannot be null!");
-                }
-
-                //Creates a temporary high res bladder structure to ensure that the high res structure is being worked on.
-                string blaHiresName = "bladHiRes_AUTO";
-                if (Helpers.CheckStructureExists(pl, blaHiresName))
-                {
-                    string errorMessage = string.Format("'{0}' already exists. Please delete or rename structure before running the script again.", blaHiresName);
-                    Helpers.SeriLog.AddError(errorMessage);
-                    throw new Exception(errorMessage);
-                }
-                Structure bladderHiRes = pl.StructureSet.AddStructure("CONTROL", blaHiresName);
-                bladderHiRes.SegmentVolume = bladder.SegmentVolume;
-                bladderHiRes.ConvertToHighResolution(); //Make a high res structure. Better clinically for DVH estimates close to PTV structures etc. 
-
-                //Creates a temporary step 2 bladder structure in situations where the margin reductions are larger > 50mm
-                string step2BladderName = "step2Blad_AUTO";
-                if (Helpers.CheckStructureExists(pl, step2BladderName))
-                {
-                    string errorMessage = string.Format("'{0}' already exists. Please delete or rename structure before running the script again.", step2BladderName);
-                    Helpers.SeriLog.AddError(errorMessage);
-                    throw new Exception(errorMessage);
-                }
-                Structure step2Bladder = pl.StructureSet.AddStructure("CONTROL", step2BladderName);
-                step2Bladder.SegmentVolume = bladder.SegmentVolume;
-                step2Bladder.ConvertToHighResolution(); //Make a high res structure. Better clinically for DVH estimates close to PTV structures etc.
-
-                //Create Bladdermin_AUTO structure.
-                string bladderMinName = "Bladmin_AUTO";
-                if (Helpers.CheckStructureExists(pl, bladderMinName))
-                {
-                    string errorMessage = string.Format("'{0}' already exists. Please delete or rename strcuture before running the script again.", bladderMinName);
-                    Helpers.SeriLog.AddError(errorMessage);
-                    throw new Exception(errorMessage);
-                }
-                Structure bladderMin = pl.StructureSet.AddStructure("CONTROL", bladderMinName);
-                bladderMin.ConvertToHighResolution();
-                bladderMin.SegmentVolume = bladderHiRes.SegmentVolume;
-
-
-                //------------------------------------------------------------------------------------------------------------------
-                //Find the plan sum if there is one. Needed for multi-phase protocols
-                PlanSum planSum = pl.Course.PlanSums.FirstOrDefault(x => x.Id.Equals(_planSumId, StringComparison.CurrentCultureIgnoreCase));
-
-                //Define low dose isodose structure that is needed to ensure the bladdermin structure includes low dose in the bladder.
-                Structure lowDoseIso = Helpers.CreateLowDoseIsoStructure(pl, _protocol, planSum);
-
-
-                //------------------------------------------------------------------------------------------------------------------------
-                //Define margins
-                double supMargin = 0; //in mm
-                double antMargin = 0;
-                double infMargin = 25;
-
-                //Define placeholders for bladdermin constraints.
-                double blaMinVol = 0;
-                double blaMinVHigh = 0;
-                double blaMinVInt = 0;
-                double blaMinVLow = 0;
-
-                List<string> blaMinConstraints = new List<string>() { };
-                List<string> marginsValues = new List<string>() { };
-
-
-                //---------------------------------------------------------------------------------------------------------------------------------
-                //Initiate volume reduction loop based on volume constraints at each iteration being met.
-                bool constraintsMet = true;
-
-                while (constraintsMet)
-                {
-                    antMargin = Math.Ceiling((supMargin / 3));
-                    //Get margins with respect to patient orientation and perform the volume reduction
-                    AxisAlignedMargins margins = Helpers.ConvertInnerMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
-
-                    //If sup margins extend beyond 5cm, we have to need to create a step 2 bladder structure from the previous margin reduction in order
-                    // to continue reducing the margins for the final Bladdermin structure 
-                    if(_bigMargin == true)
+                    //Get bladder structure.
+                    Structure bladder = pl.StructureSet.Structures.FirstOrDefault(x => x.Id == _bladderStructure);
+                    //Checks that the user selected a bladder contour.
+                    if (bladder == null)
                     {
-                        bladderMin.SegmentVolume = step2Bladder.SegmentVolume.AsymmetricMargin(margins);
+                        var errorMessage = "Could not find bladder contour.";
+                        Helpers.SeriLog.AddError(errorMessage);
+                        throw new Exception(errorMessage);
+                    }
+                    else if (bladder.IsEmpty)
+                    {
+                        var errorMessage = "Bladder structure is empty.";
+                        Helpers.SeriLog.AddError(errorMessage);
+                        throw new Exception(errorMessage);
+                    }
+
+                    //Creates a temporary high res bladder structure to ensure that the high res structure is being worked on.
+                    string blaHiresName = "bladHiRes_AUTO";
+                    Structure bladderHiRes = pl.StructureSet.Structures.FirstOrDefault(x => x.Id.Equals(blaHiresName, StringComparison.OrdinalIgnoreCase));
+                    if (bladderHiRes != null)
+                    {
+                        string warningMessage = string.Format("'{0}' already exists. Please delete or rename structure before running the script again.", blaHiresName);
+                        Helpers.SeriLog.AddError(warningMessage);
                     }
                     else
                     {
-                        bladderMin.SegmentVolume = bladderHiRes.SegmentVolume.AsymmetricMargin(margins);
-                        step2Bladder.SegmentVolume = bladderMin.SegmentVolume; //Saves only bladdermin margin reduction to be used to make "Step 2 bladder" if necessary 
+                        bladderHiRes = pl.StructureSet.AddStructure("CONTROL", blaHiresName);
+                        bladderHiRes.SegmentVolume = bladder.SegmentVolume;
+                        bladderHiRes.ConvertToHighResolution(); //Make a high res structure. Better clinically for DVH estimates close to PTV structures etc. 
                     }
-                    
-                    //Find overlap of bladder and low dose structure and then OR it with the bladdermin to add that back to the bladdermin structure. 
-                    bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
 
-                    //Expand an inf margin then cropped out from the bladder to allow a more clinically relevant bladdermin with less dosimetry post-processing
-                    AxisAlignedMargins infMargins = Helpers.ConvertOuterMargins(pl.TreatmentOrientation,0, 0, infMargin, 0, 0, 0);
-                    bladderMin.SegmentVolume = bladderMin.SegmentVolume.AsymmetricMargin(infMargins);
-                    bladderMin.SegmentVolume = bladderMin.SegmentVolume.And(bladderHiRes);
-
-                    //Get bladdermin volume.
-                    blaMinVol = bladderMin.Volume;
-
-                    //Get DVH values for bladdermin
-                    GetDVHValues(pl, planSum, bladderMin, _protocol, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
-
-                    //Compare bladdermin constraint values to bladder constraints.
-                    if (_protocol.Name == "Prostate 70 Gy in 28#" || _protocol.Name == "Prostate 78 Gy in 39# (2 phase)")
+                    //Creates a temporary step 2 bladder structure in situations where the margin reductions are larger > 50mm
+                    string prevBladderMin = "Blad_AUTO_prev";
+                    Structure bladderMinPrev = pl.StructureSet.Structures.FirstOrDefault(x => x.Id.Equals(prevBladderMin, StringComparison.OrdinalIgnoreCase));
+                    if (bladderMinPrev != null)
                     {
-                        if (blaMinVLow > _protocol.vLow || blaMinVHigh > _protocol.vHigh || blaMinVol < 80)
-                        {
-                            constraintsMet = false;
-                            if (supMargin != 0)
-                            {
-                                 supMargin -= 1; //Sets up to take the previous iteration that passed before failing constraints.
-                            }
-                            antMargin = Math.Ceiling((supMargin / 3));
-                            margins = Helpers.ConvertInnerMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
-
-                            if (_bigMargin == true) //Differentiates whether it's acting on the original bladderHires structure or the step 2 bladder structure.
-                            {
-                                bladderMin.SegmentVolume = step2Bladder.SegmentVolume.AsymmetricMargin(margins);
-                            }
-                            else
-                            {
-                                bladderMin.SegmentVolume = bladderHiRes.SegmentVolume.AsymmetricMargin(margins);
-                            }
-
-                            //Find overlap of bladder and low dose isodose structure and then boolen operator "OR" it with the bladdermin to add that back to the bladdermin structure. 
-                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
-
-                            //Expand an inf margin then cropped out from the bladder to allow a more clinically relevant bladdermin with less dosimetry post-processing
-                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.AsymmetricMargin(infMargins);
-                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.And(bladderHiRes);
-
-                            //Get bladdermin volume.
-                            blaMinVol = bladderMin.Volume;
-
-                            //Get DVH values for bladdermin
-                            GetDVHValues(pl, planSum, bladderMin, _protocol, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
-
-                            //Summarize constraints and volume to the GUI.
-                            blaMinConstraints.Add(blaMinVHigh.ToString("#.0"));
-                            blaMinConstraints.Add(blaMinVLow.ToString("#.0"));
-
-                            _constraintValList = blaMinConstraints;
-                            _blaMinVol = blaMinVol;
-                            if(_bigMargin == true)
-                            {
-                                _supMargin = supMargin + 50;
-                                _antMargin = antMargin + 17;
-                            }
-                            else
-                            {
-                                _supMargin = supMargin;
-                                _antMargin = antMargin;
-                            }
-                        }
-                    }
-                    if (_protocol.Name == "Prostate 60 Gy in 20#" || _protocol.Name == "Prostate SABR 36.25 Gy in 5#")
-                    {
-                        if (blaMinVLow > _protocol.vLow || blaMinVInt > _protocol.vInt || blaMinVHigh > _protocol.vHigh || blaMinVol < 80)
-                        {
-                            constraintsMet = false;
-                            if (supMargin != 0)
-                            {
-                                supMargin -= 1; //Sets up to take the previous iteration that passed before failing constraints.
-                            }
-                            antMargin = Math.Ceiling((supMargin / 3));
-                            margins = Helpers.ConvertInnerMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
-
-                            if (_bigMargin == true)
-                            {
-                                bladderMin.SegmentVolume = step2Bladder.SegmentVolume.AsymmetricMargin(margins);
-                            }
-                            else
-                            {
-                                bladderMin.SegmentVolume = bladderHiRes.SegmentVolume.AsymmetricMargin(margins);
-                            }
-
-                            //Find overlap of bladder and low dose isodose structure and then boolen operator "OR" it with the bladdermin to add that back to the bladdermin structure. 
-                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(bladderHiRes.SegmentVolume.And(lowDoseIso));
-
-                            //Expand an inf margin then cropped out from the bladder to allow a more clinically relevant bladdermin with less dosimetry post-processing
-                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.AsymmetricMargin(infMargins);
-                            bladderMin.SegmentVolume = bladderMin.SegmentVolume.And(bladderHiRes);
-
-                            //Get bladdermin volume.
-                            blaMinVol = bladderMin.Volume;
-
-                            //Get DVH values for bladdermin
-                            GetDVHValues(pl, planSum, bladderMin, _protocol, out blaMinVHigh, out blaMinVInt, out blaMinVLow);
-
-                            //Summarize constraints and volume to the GUI.
-                            blaMinConstraints.Add(blaMinVHigh.ToString("#.0"));
-                            blaMinConstraints.Add(blaMinVInt.ToString("#.0"));
-                            blaMinConstraints.Add(blaMinVLow.ToString("#.0"));
-
-                            _constraintValList = blaMinConstraints;
-                            _blaMinVol = blaMinVol;
-                            if (_bigMargin == true)
-                            {
-                                _supMargin = supMargin + 50;
-                                _antMargin = antMargin + 17;
-                            }
-                            else
-                            {
-                                _supMargin = supMargin;
-                                _antMargin = antMargin;
-                            }
-                        }
-                    }
-                    if (supMargin < 50)
-                    {
-                        supMargin += 1;   
+                        string warningMessage = $"{bladderMinPrev} already exists. Clearing structure...";
+                        Helpers.SeriLog.AddLog(warningMessage);
                     }
                     else
                     {
-                        _bigMargin = true; //Activates a step 2 bladder structure should the sup margin reduction exceed 50mm. 
-                        supMargin = 1;
-                        Helpers.SeriLog.AddError("Margin reduction exceeds 5cm. Creating a step 2 bladder to continue reduction...");
+                        bladderMinPrev = pl.StructureSet.AddStructure("CONTROL", prevBladderMin);
+                        bladderMinPrev.SegmentVolume = bladderHiRes.SegmentVolume; // automatically a high res structure due to conversion of bladderHiRes
+                        
                     }
-                }
-                //---------------------------------------------------------------------------------------------------------------
-                //Clean up temp structures that are no longer needed
-                pl.StructureSet.RemoveStructure(bladderHiRes);
-                pl.StructureSet.RemoveStructure(lowDoseIso);
-                pl.StructureSet.RemoveStructure(step2Bladder);
-                
 
-                _bladderMinDone = true;
+                    //Create Bladdermin_AUTO structure.
+                    string bladderMinName = "Bladmin_AUTO";
+                    var bladderMin = pl.StructureSet.Structures.FirstOrDefault(x => x.Id == bladderMinName);
+                    if (bladderMin != null)
+                    {
+                        string warningMessage = $"{bladderMinName} already exists. Clearing structure...";
+                        Helpers.SeriLog.AddLog(warningMessage);
+                    }
+                    else
+                    {
+                        bladderMin = pl.StructureSet.AddStructure("CONTROL", bladderMinName);
+                        bladderMin.ConvertToHighResolution();
+                        bladderMin.SegmentVolume = bladderHiRes.SegmentVolume;
+                    }
+
+
+                    //------------------------------------------------------------------------------------------------------------------
+                    // Get planning item from which to evaluate dose. This will be a sum for a multi phase protocol and a planSetup if not;
+                    PlanningItem doseSource = null;
+                    if (_protocol.isMultiPhase)
+                        doseSource = pl.Course.PlanSums.FirstOrDefault(x => x.Id.Equals(_planSumId, StringComparison.CurrentCultureIgnoreCase));
+                    else
+                        doseSource = pl;
+
+                    if (doseSource == null) 
+                    {
+                        string errorMessage = "Could not find plan or plan sum.";
+                        Helpers.SeriLog.AddLog(errorMessage);
+                        throw new Exception(errorMessage);
+                    }
+
+                    //Define low dose isodose structure that is needed to ensure the bladdermin structure includes low dose in the bladder.
+                    Structure lowDoseOverlap = Helpers.CreateLowDoseIsoStructure(doseSource, _protocol);
+                    lowDoseOverlap.SegmentVolume = bladderHiRes.SegmentVolume.And(lowDoseOverlap.SegmentVolume);
+
+
+                    //------------------------------------------------------------------------------------------------------------------------
+                    //Define initial margins
+                    double supMargin = 0; //in mm
+                    double antMargin = 0;
+
+                    double supMarginIncrement = 1;
+
+                    double TotalSupMargin = 0;
+                    double TotalAntMargin = 0;
+                    double RunningSupMargin = 0;
+                    double RunningAntMargin = 0;
+
+
+                    //Define placeholders for bladdermin constraints.
+                    double blaMinVol = bladderHiRes.Volume;
+                   
+                    bool updateSourceStructure = false;
+                    bool keepShrinking = true;
+                    ProtocolResult lastAcceptableBladderMinResult = new ProtocolResult();
+                    _blaMinVol = blaMinVol;
+                    //---------------------------------------------------------------------------------------------------------------------------------
+                    //Initiate volume reduction loop based on volume constraints at each iteration being met.
+
+                    while (keepShrinking)
+                    {
+                        bladderMinPrev.SegmentVolume = bladderMin.SegmentVolume; // Set previous bladdermin to current bladdermin in case this iteration shrinks the bladdermin structure too much.
+                        (antMargin, supMargin, updateSourceStructure) = IncrementMargins(supMargin, supMarginIncrement);
+
+                        //If sup margins have reached internal margin limit, set source bladderHiRes structure to bladdermin structure and shrink from here
+                        if (updateSourceStructure)
+                        {
+                            bladderHiRes.SegmentVolume = bladderMin.SegmentVolume;
+                            TotalAntMargin += RunningAntMargin;
+                            TotalSupMargin += RunningSupMargin;
+                        }
+
+                        //Get margins with respect to patient orientation and perform the volume reduction
+                        AxisAlignedMargins margins = Helpers.ConvertInnerMargins(pl.TreatmentOrientation, 0, antMargin, 0, 0, 0, supMargin);
+
+                        // Reduce the bladder volume by the new margins;
+                        ReduceBladderMin(pl.TreatmentOrientation, bladderMin, lowDoseOverlap, bladderHiRes, margins);
+
+                        //Get bladdermin volume.
+                        blaMinVol = bladderMin.Volume;
+
+                        // Hack due to Eclipse bug, needed so GetVolumeAtDose works.
+                        doseSource.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
+
+                        var protocolStatus = _protocol.EvaluateBladderMin(doseSource, bladderMin);
+                        keepShrinking = protocolStatus.IsMet && blaMinVol > 80;
+
+                        if (keepShrinking)
+                        {
+                            RunningSupMargin = supMargin;
+                            RunningAntMargin = antMargin;
+                            lastAcceptableBladderMinResult = protocolStatus;
+                            _blaMinVol = blaMinVol;
+                        }
+                        else
+                        {
+                            TotalAntMargin += RunningAntMargin;
+                            TotalSupMargin += RunningSupMargin;
+                        }
+                    }
+                    //---------------------------------------------------------------------------------------------------------------
+                    //Clean up temp structures that are no longer needed
+                    pl.StructureSet.RemoveStructure(bladderHiRes);
+                    pl.StructureSet.RemoveStructure(lowDoseOverlap);
+                    pl.StructureSet.RemoveStructure(bladderMinPrev);
+
+                    result = new BladderMinCreationResults(true, "Complete", _blaMinVol, TotalSupMargin, TotalAntMargin, lastAcceptableBladderMinResult);
+                }
+                catch (Exception ex)
+                {
+                    result = new BladderMinCreationResults(false, ex.Message);
+                }
             }));
+            return result;
         }
 
-
-        //A tuple method to store the results from the CreateBladderMinStructure method.
-        public Tuple<List<string>, double, double, double> GetResults()
+        private (double antMargin, double supMargin, bool updateSourceStructure) IncrementMargins(double supMargin, double supMarginIncrement)
         {
-            if (_bladderMinDone)
+            double antMargin = Math.Ceiling((supMargin / 3));
+            supMargin = supMargin + supMarginIncrement;
+            double newSupMargin = supMargin % 51; // 50 is the max sup margin allowed.
+            bool updateSourceStructure = supMargin > 50;
+            if (updateSourceStructure)
             {
-                return new Tuple<List<string>, double, double, double>(_constraintValList, _blaMinVol, _supMargin, _antMargin);
+                Helpers.SeriLog.AddError("Margin reduction exceeds 5cm. Rebasing bladder on existing bladderMin to continue reduction...");
             }
-            else return null;
+            return (antMargin, newSupMargin, updateSourceStructure);
         }
 
-
-        //Gets DVH values based on either a plan or a plan sum
-        public static void GetDVHValues(PlanSetup pl, PlanSum planSum, Structure bladderMin, Protocol protocol, out double blaMinVHigh, out double blaMinVInt, out double blaMinVLow)
+        private void ReduceBladderMin(PatientOrientation orientation, Structure bladderMin, Structure lowDoseOverlap, Structure currentBladder, AxisAlignedMargins margins)
         {
-            if (planSum != null)
-            {
-                planSum.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
-                blaMinVHigh = planSum.GetVolumeAtDose(bladderMin, protocol.dHigh, VolumePresentation.Relative);
-                blaMinVInt = planSum.GetVolumeAtDose(bladderMin, protocol.dInt, VolumePresentation.Relative);
-                blaMinVLow = planSum.GetVolumeAtDose(bladderMin, protocol.dLow, VolumePresentation.Relative);
-            }
-            else
-            {
-                pl.GetDVHCumulativeData(bladderMin, DoseValuePresentation.Absolute, VolumePresentation.Relative, 0.1);
-                blaMinVHigh = pl.GetVolumeAtDose(bladderMin, protocol.dHigh, VolumePresentation.Relative);
-                blaMinVInt = pl.GetVolumeAtDose(bladderMin, protocol.dInt, VolumePresentation.Relative);
-                blaMinVLow = pl.GetVolumeAtDose(bladderMin, protocol.dLow, VolumePresentation.Relative);
-            }
+            double infMargin = 25;
+
+            bladderMin.SegmentVolume = currentBladder.SegmentVolume.AsymmetricMargin(margins);
+
+            //Find overlap of bladder and low dose structure and then OR it with the bladdermin to add that back to the bladdermin structure. 
+            bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(currentBladder.SegmentVolume.And(lowDoseOverlap));
+
+            //Expand an inf margin then cropped out from the bladder to allow a more clinically relevant bladdermin with less dosimetry post-processing
+            AxisAlignedMargins infMargins = Helpers.ConvertOuterMargins(orientation, 0, 0, infMargin, 0, 0, 0);
+            bladderMin.SegmentVolume = bladderMin.SegmentVolume.AsymmetricMargin(infMargins);
+            bladderMin.SegmentVolume = bladderMin.SegmentVolume.And(currentBladder);
         }
+
     }
 }

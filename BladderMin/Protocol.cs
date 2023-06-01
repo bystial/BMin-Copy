@@ -5,31 +5,49 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using VMS.TPS;
+using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
 using static VMS.TPS.Helpers;
 
 namespace BladderMin
 {
+    public struct ProtocolResult
+    {
+        public bool IsMet { get; private set; }
+        public List<BladderConstraintResult> ConstraintResults;
+        public ProtocolResult(List<BladderConstraintResult> constraintResults)
+        {
+            ConstraintResults = constraintResults;
+            if (constraintResults.All(x => x.IsMet))
+                IsMet = true;
+            else
+                IsMet = false;
+        }
+    }
     public class Protocol
     {
         //Properties
         public string Name { get; set; }
-        public double vHigh { get; set; }
-        public double vInt { get; set; }
-        public double vLow { get; set; }
 
-        public DoseValue dHigh { get; set; }
-        public DoseValue dInt { get; set; }
-        public DoseValue dLow { get; set; }
-        public double dLowIso { get; set; }
-        public List<string> ProtocolConstraints { get; set; }
+        public List<BladderConstraint> ProtocolConstraints { get; set; } = new List<BladderConstraint>();
 
         public bool isNodesTreatable { get; set; } = true;
         public bool isMultiPhase { get; set; } = false;
 
         private bool _isNodesSelected = false;
 
-        private BladderMinProtocolTypes _protocolType;
+        public DoseValue LowDoseConstraintValue
+        {
+            get
+            {
+                if (ProtocolConstraints != null)
+                    return ProtocolConstraints.Select(x => x.Dose).OrderByDescending(x => x.Dose).Last();
+                else
+                    return new DoseValue(0, DoseValue.DoseUnit.cGy);
+            }
+        }
+
+        public BladderMinProtocolTypes ProtocolType { get; private set; }
 
         //A method to indicated whether nodes have been selected by the user and updates the protocol constraints as necessary
         public void SetNodesSelected(bool isNodesSelected)
@@ -38,37 +56,29 @@ namespace BladderMin
             SetContraints();
         }
 
+        public ProtocolResult EvaluateBladderMin(PlanningItem p, Structure s)
+        {
+            var results = new List<BladderConstraintResult>();
+            foreach (var constraint in ProtocolConstraints)
+            {
+                var (isMet, vol) = constraint.GetVolumeAtConstraint(p, s);
+                results.Add(new BladderConstraintResult { IsMet = isMet, Volume = vol });
+            }
+            return new ProtocolResult(results);
+        }
         //Sets the constraints depending on the protocol selected and whether nodes are selected or not.
         private void SetContraints()
         {
-            vHigh = 0;
-            vInt = 0;
-            vLow = 0;
-
-            dHigh = new DoseValue(0, DoseValue.DoseUnit.cGy);
-            dInt = new DoseValue(0, DoseValue.DoseUnit.cGy);
-            dLow = new DoseValue(0, DoseValue.DoseUnit.cGy);
-            dLowIso = 0;
-
-            switch (_protocolType)
+            switch (ProtocolType)
             {
                 case BladderMinProtocolTypes.Prostate60in20:
                     {
                         Name = "Prostate 60 Gy in 20#";
-                        vHigh = 5;
-                        vInt = 25;
-                        vLow = 50;
-
-                        dHigh = new DoseValue(6000, DoseValue.DoseUnit.cGy);
-                        dInt = new DoseValue(4800, DoseValue.DoseUnit.cGy);
-                        dLow = new DoseValue(3800, DoseValue.DoseUnit.cGy);
-                        dLowIso = 63.3;
-
-                        ProtocolConstraints = new List<string>
+                        ProtocolConstraints = new List<BladderConstraint>
                         {
-                            "V60 ≤ 5%",
-                            "V48 ≤ 25%",
-                            "V38 ≤ 50%"
+                            new BladderConstraint("V60 ≤ 5%", new DoseValue(6000, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 5),
+                            new BladderConstraint("V48 ≤ 25%", new DoseValue(4800, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 25),
+                            new BladderConstraint("V38 ≤ 50%", new DoseValue(3800, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 50),
                         };
 
                         SeriLog.AddLog("Protocol selected: Prostate 60 Gy in 20#");
@@ -77,37 +87,18 @@ namespace BladderMin
                 case BladderMinProtocolTypes.Prostate70in28:
                     {
                         Name = "Prostate 70 Gy in 28#";
+                        ProtocolConstraints = new List<BladderConstraint>
+                        {
+                            new BladderConstraint("V65 ≤ 25%", new DoseValue(6500, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 25),
+                        };
                         if (_isNodesSelected) //Toggle box for nodal coverage
                         {
-                            vHigh = 25;
-                            vLow = 50;
-
-                            dHigh = new DoseValue(6500, DoseValue.DoseUnit.cGy);
-                            dLow = new DoseValue(5600, DoseValue.DoseUnit.cGy);
-                            dLowIso = 80.0;
-
-                            ProtocolConstraints = new List<string>
-                            {
-                                "V65 ≤ 25%",
-                                "V56 ≤ 50%"
-                            };
-
+                            ProtocolConstraints.Add(new BladderConstraint("V56 ≤ 50%", new DoseValue(5600, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 50));
                             SeriLog.AddLog(string.Format("Protocol selected: Prostate 70 Gy in 28#  \n Nodes treated: Y"));
                         }
                         else
                         {
-                            vHigh = 25;
-                            vLow = 50;
-
-                            dHigh = new DoseValue(6500, DoseValue.DoseUnit.cGy);
-                            dLow = new DoseValue(4700, DoseValue.DoseUnit.cGy);
-                            dLowIso = 67.1;
-
-                            ProtocolConstraints = new List<string>
-                            {
-                                    "V65 ≤ 25%",
-                                    "V47 ≤ 50%"
-                            };
+                            ProtocolConstraints.Add(new BladderConstraint("V47 ≤ 50%", new DoseValue(4700, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 50));
                             SeriLog.AddLog(string.Format("Protocol selected: Prostate 70 Gy in 28#  \n Nodes treated: N"));
                         }
                         break;
@@ -117,38 +108,18 @@ namespace BladderMin
                     {
                         Name = "Prostate 78 Gy in 39# (2 phase)";
                         isMultiPhase = true;
+                        ProtocolConstraints = new List<BladderConstraint>
+                        {
+                            new BladderConstraint("V70 ≤ 25%", new DoseValue(7000, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 25),
+                        };
                         if (_isNodesSelected) //Toggle box for nodal coverage
                         {
-                            vHigh = 25;
-                            vLow = 50;
-
-                            dHigh = new DoseValue(7000, DoseValue.DoseUnit.cGy);
-                            dLow = new DoseValue(6000, DoseValue.DoseUnit.cGy);
-                            dLowIso = 76.9;
-
-                            ProtocolConstraints = new List<string>
-                            {
-                                "V70 ≤ 25%",
-                                "V60 ≤ 50%"
-                            };
-
+                            ProtocolConstraints.Add(new BladderConstraint("V60 ≤ 50%", new DoseValue(6000, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 50));
                             SeriLog.AddLog(string.Format("Protocol selected: Prostate 78 Gy in 39# 2-phase  \n Nodes treated: Y"));
                         }
                         else
                         {
-                            vHigh = 25;
-                            vLow = 50;
-
-                            dHigh = new DoseValue(7000, DoseValue.DoseUnit.cGy);
-                            dLow = new DoseValue(5000, DoseValue.DoseUnit.cGy);
-                            dLowIso = 64.1;
-
-                            ProtocolConstraints = new List<string>
-                            {
-                                "V70 ≤ 25%",
-                                "V50 ≤ 50%"
-                            };
-
+                            ProtocolConstraints.Add(new BladderConstraint("V50 ≤ 50%", new DoseValue(6000, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 50));
                             SeriLog.AddLog(string.Format("Protocol selected: Prostate 78 Gy in 39# 2-phase  \n Nodes treated: N"));
                         }
                         break;
@@ -157,22 +128,12 @@ namespace BladderMin
                     {
                         Name = "Prostate SABR 36.25 Gy in 5#";
                         isNodesTreatable = false;
-                        vHigh = 10;
-                        vInt = 20;
-                        vLow = 45;
-
-                        dHigh = new DoseValue(3600, DoseValue.DoseUnit.cGy);
-                        dInt = new DoseValue(3300, DoseValue.DoseUnit.cGy);
-                        dLow = new DoseValue(1800, DoseValue.DoseUnit.cGy);
-                        dLowIso = 49.7;
-
-                        ProtocolConstraints = new List<string>
+                        ProtocolConstraints = new List<BladderConstraint>
                         {
-                            "V36 ≤ 10%",
-                            "V33 ≤ 20%",
-                            "V18 ≤ 45%"
+                             new BladderConstraint("V36 ≤ 10%", new DoseValue(3600, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 10),
+                            new BladderConstraint("V33 ≤ 20%", new DoseValue(3300, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 20),
+                            new BladderConstraint("V18 ≤ 45%", new DoseValue(1800, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 45),
                         };
-
                         SeriLog.AddLog("Protocol selected: Prostate SABR 36.25 Gy in 5#");
                         break;
                     }
@@ -182,13 +143,13 @@ namespace BladderMin
                     }
             }
         }
-    
+
         // The Protocol class constructor
         public Protocol(BladderMinProtocolTypes selectedProtocolType, bool isNodesSelectedDefault)
         {
             //Instantiate the protocol
             _isNodesSelected = isNodesSelectedDefault;
-            _protocolType = selectedProtocolType;
+            ProtocolType = selectedProtocolType;
             SetContraints();
         }
     }
