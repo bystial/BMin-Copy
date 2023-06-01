@@ -11,33 +11,33 @@
         d:DataContext="{d:DesignInstance Type=local:ViewModel, IsDesignTimeCreatable=True}"
         Title="BladderMin v1.1" Height="550" Width="450" ResizeMode="NoResize">
 
-<Window.Resources>
-    <converters:VisibilityConverter x:Key="VisibilityConverter"/>
-    <converters:BoolToString x:Key="BoolToString"/>
+    <Window.Resources>
+        <converters:VisibilityConverter x:Key="VisibilityConverter"/>
+        <converters:BoolToString x:Key="BoolToString"/>
 
         <Style x:Key="ButtonStyle" TargetType="{x:Type Button}">
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Padding" Value="0,0,0,0"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border Name="border" BorderThickness="1" Padding="3,2" BorderBrush="Transparent" CornerRadius="3" Background="{TemplateBinding Background}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="BorderBrush" Value="Black"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-</Window.Resources>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0,0,0,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" BorderThickness="1" Padding="3,2" BorderBrush="Transparent" CornerRadius="3" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="Black"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -56,11 +56,11 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Orientation="Horizontal">
-                <Label Content="Current plan:" FontSize="14" FontWeight="Normal" VerticalContentAlignment="Center" />
+                <Label Content="Current plan:" FontSize="14" FontWeight="Normal" VerticalContentAlignment="Center" Style="{x:Null}"/>
                 <TextBlock Text="{Binding PlanId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </StackPanel>
             <StackPanel Grid.Row="1" Orientation="Horizontal">
-                <Label Content="Current structure set:" FontSize="14" FontWeight="Normal" VerticalContentAlignment="Center" />
+                <Label Content="Current structure set:" FontSize="14" FontWeight="Normal" VerticalContentAlignment="Center" Style="{x:Null}"/>
                 <TextBlock Text="{Binding StructureSetId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </StackPanel>
             <Border Grid.Row="2" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,10"/>
@@ -94,7 +94,7 @@
             </StackPanel>
             <StackPanel Grid.Row="4" Orientation="Horizontal" Visibility="{Binding NodalSelectionVisibility, UpdateSourceTrigger=PropertyChanged}">
                 <Label Content="Nodes/Pelvis Treated?" FontSize="14" FontWeight="Bold" VerticalContentAlignment="  Center"/>
-                <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsNodesSelected, Mode=TwoWay}" />
+                <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsNodesSelected, Mode=TwoWay}" Style="{x:Null}" />
             </StackPanel>
             <Border Grid.Row="5" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
         </Grid>
@@ -112,10 +112,59 @@
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <ListView Grid.Column="0" ItemsSource="{Binding ProtocolConstraintsList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
-                <ListBox Grid.Column="1" ItemsSource="{Binding ConstraintValuesList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14"/>
+                <ListView Grid.Column="0" BorderThickness="0" ItemsSource="{Binding ProtocolConstraintsList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" AlternationCount="2" Foreground="Black" FontSize="14">
+                    <ListView.Style>
+                        <Style>
+                            <Setter Property="Control.Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type ListView}">
+                                        <ItemsPresenter/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListView.Style>
+
+
+                    <ListView.ItemContainerStyle>
+                        <!--Add alternating row colors-->
+                        <Style TargetType="{x:Type ListViewItem}">
+                            <Setter Property="Background" Value="White"/>
+                            <Style.Triggers>
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                    <Setter Property="Background" Value="LightSteelBlue"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
+                <ListView Grid.Column="1" BorderThickness="0" AlternationCount="2" ItemsSource="{Binding ConstraintValuesList, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Foreground="Black" FontSize="14" Padding="-10,0,0,0">
+                    <ListView.Style>
+                        <Style>
+                            <Setter Property="Control.Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type ListView}">
+                                        <ItemsPresenter/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListView.Style>
+                    <ListView.ItemContainerStyle>
+                        <!--Add alternating row colors-->
+                        <Style TargetType="{x:Type ListViewItem}">
+                            <Setter Property="Background" Value="White"/>
+                            <Style.Triggers>
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                    <Setter Property="Background" Value="LightSteelBlue"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
             </Grid>
             <Border Grid.Row="2" Background="Black" Height="1.5" HorizontalAlignment="Stretch" Margin="0,5,5,5"/>
         </Grid>
@@ -166,5 +215,5 @@
                          IsIndeterminate="True" Visibility="{Binding ScriptWorking, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityConverter}}"/>
             </Grid>
         </Grid>
-    </Grid> 
+    </Grid>
 </Window>

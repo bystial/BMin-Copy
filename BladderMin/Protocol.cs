@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CsvHelper.Configuration.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -14,14 +15,14 @@ namespace BladderMin
     public struct ProtocolResult
     {
         public bool IsMet { get; private set; }
+        public double BladderMinVolume { get; private set; }
+        
         public List<BladderConstraintResult> ConstraintResults;
-        public ProtocolResult(List<BladderConstraintResult> constraintResults)
+        public ProtocolResult(bool isMet, double bladderMinVolume, List<BladderConstraintResult> constraintResults)
         {
+            BladderMinVolume = bladderMinVolume;
             ConstraintResults = constraintResults;
-            if (constraintResults.All(x => x.IsMet))
-                IsMet = true;
-            else
-                IsMet = false;
+            IsMet = isMet;
         }
     }
     public class Protocol
@@ -31,6 +32,7 @@ namespace BladderMin
 
         public List<BladderConstraint> ProtocolConstraints { get; set; } = new List<BladderConstraint>();
 
+        public double minVolumeConstraint { get; set; } = 80;
         public bool isNodesTreatable { get; set; } = true;
         public bool isMultiPhase { get; set; } = false;
 
@@ -58,13 +60,14 @@ namespace BladderMin
 
         public ProtocolResult EvaluateBladderMin(PlanningItem p, Structure s)
         {
-            var results = new List<BladderConstraintResult>();
+            var constraintResults = new List<BladderConstraintResult>();
             foreach (var constraint in ProtocolConstraints)
             {
                 var (isMet, vol) = constraint.GetVolumeAtConstraint(p, s);
-                results.Add(new BladderConstraintResult { IsMet = isMet, Volume = vol });
+                constraintResults.Add(new BladderConstraintResult { IsMet = isMet, Volume = vol });
             }
-            return new ProtocolResult(results);
+            var protocolConstraintsAreMet = constraintResults.All(x => x.IsMet) && s.Volume > minVolumeConstraint;
+            return new ProtocolResult(protocolConstraintsAreMet, s.Volume, constraintResults);
         }
         //Sets the constraints depending on the protocol selected and whether nodes are selected or not.
         private void SetContraints()

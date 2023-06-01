@@ -45,28 +45,8 @@ namespace VMS.TPS
         }
 
         //Creates a Low Dose Isodose structure used to determine overlap with prescription dose into the bladder.
-        public static Structure CreateLowDoseIsoStructure(PlanningItem doseSource, Protocol protocol)
-        {
-            Structure lowDoseIso;
-            string lowDoseIsoId = "lowDoseIso";
-            lowDoseIso = doseSource.StructureSet.Structures.FirstOrDefault(x => x.Id.Equals(lowDoseIsoId, StringComparison.OrdinalIgnoreCase));
-            if (lowDoseIso == null)
-                lowDoseIso = doseSource.StructureSet.AddStructure("CONTROL", lowDoseIsoId);
-            if (doseSource.DoseValuePresentation == DoseValuePresentation.Absolute)
-                lowDoseIso.ConvertDoseLevelToStructure(doseSource.Dose, protocol.LowDoseConstraintValue);
-            else
-                lowDoseIso.ConvertDoseLevelToStructure(doseSource.Dose, new DoseValue(protocol.LowDoseConstraintValue / ((PlanSetup)doseSource).TotalDose * 100, DoseValue.DoseUnit.Percent));
-            if (!lowDoseIso.IsHighResolution)
-            {
-                lowDoseIso.ConvertToHighResolution();
-            }
-            return lowDoseIso; 
-        }
-
-
-
-
-        //Checks if a structure already exists.
+       
+         //Checks if a structure already exists.
         public static bool CheckStructureExists(PlanSetup planSetup, string structureId)
         {
             if (planSetup.StructureSet.Structures.Select(x => x.Id).Any(y => y == structureId))
@@ -77,18 +57,18 @@ namespace VMS.TPS
         }
 
         //Converts inner margins to align with Patient Orientation
-        public static AxisAlignedMargins ConvertInnerMargins(PatientOrientation patientOrientation, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
+        public static AxisAlignedMargins ConvertMargins(PatientOrientation patientOrientation, StructureMarginGeometry geometry, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
         {
             switch (patientOrientation)
             {
                 case PatientOrientation.HeadFirstSupine:
-                    return new AxisAlignedMargins(StructureMarginGeometry.Inner, rightMargin, antMargin, infMargin, leftMargin, postMargin, supMargin);
+                    return new AxisAlignedMargins(geometry, rightMargin, antMargin, infMargin, leftMargin, postMargin, supMargin);
                 case PatientOrientation.HeadFirstProne:
-                    return new AxisAlignedMargins(StructureMarginGeometry.Inner, leftMargin, postMargin, infMargin, rightMargin, antMargin, supMargin);
+                    return new AxisAlignedMargins(geometry, leftMargin, postMargin, infMargin, rightMargin, antMargin, supMargin);
                 case PatientOrientation.FeetFirstSupine:
-                    return new AxisAlignedMargins(StructureMarginGeometry.Inner, leftMargin, antMargin, supMargin, rightMargin, postMargin, infMargin);
+                    return new AxisAlignedMargins(geometry, leftMargin, antMargin, supMargin, rightMargin, postMargin, infMargin);
                 case PatientOrientation.FeetFirstProne:
-                    return new AxisAlignedMargins(StructureMarginGeometry.Inner, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);
+                    return new AxisAlignedMargins(geometry, rightMargin, postMargin, supMargin, leftMargin, antMargin, infMargin);
                 default:
                     throw new Exception("This orientation is not currently supported");
             }

@@ -28,8 +28,8 @@ namespace VMS.TPS
         public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>(); //{ "Design1", "Design2", "Design3" };
         public string SelectedBladderContour { get; set; } = "Bladder";
         public List<Protocol> ProtocolList { get; private set; } = new List<Protocol>();
-        public List<string> ProtocolConstraintsList { get; private set; } = new List<string>(); // { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
-        public List<string> ConstraintValuesList { get; private set; } = new List<string>(); // { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
+        public List<string> ProtocolConstraintsList { get; private set; } = new List<string>() { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
+        public List<string> ConstraintValuesList { get; private set; } = new List<string>() { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
 
         private bool _isNodesSelected;
         public bool IsNodesSelected  //Allows user to select whether nodes/pelvis is being treated.
@@ -46,7 +46,10 @@ namespace VMS.TPS
                 _isNodesSelected = value;
 
                 if (SelectedProtocol != null)
+                {
                     SelectedProtocol.SetNodesSelected(_isNodesSelected);
+                    ProtocolConstraintsList = SelectedProtocol.ProtocolConstraints.Select(x => x.Name).ToList(); // Kludge - NC
+                }
             }
         }
         private Protocol _selectedProtocol;
@@ -59,6 +62,7 @@ namespace VMS.TPS
             set
             {
                 _selectedProtocol = value;
+                ProtocolConstraintsList = SelectedProtocol.ProtocolConstraints.Select(x => x.Name).ToList();
                 RaisePropertyChangedEvent(nameof(PlanSumSelectionVisibility));
                 RaisePropertyChangedEvent(nameof(NodalSelectionVisibility));
             }
@@ -133,6 +137,8 @@ namespace VMS.TPS
                 List<string> plans = new List<string>();
                 List<string> planSums = new List<string>();
                 List<string> structures = new List<string>();
+                ProtocolConstraintsList.Clear(); // clear design time parameters;
+                ConstraintValuesList.Clear(); // clear design time parameters;
                 ObservableCollection<string> structureList = new ObservableCollection<string>();
                 ObservableCollection<string> planSumList = new ObservableCollection<string>();
                 List<BladderMinProtocolTypes> protocolOptions = new List<BladderMinProtocolTypes>()
@@ -201,10 +207,9 @@ namespace VMS.TPS
             StatusMessage = "Running...";
             StatusColour = new SolidColorBrush(Colors.Transparent);
 
-            var bladderMinModel = new BladderminModel(ew, SelectedProtocol, SelectedBladderContour, SelectedPlanSum); 
-            ProtocolConstraintsList = bladderMinModel.protocolConstraintList.Select(x=>x.Name).ToList();
-
-            var results = await bladderMinModel.CreateBladderMinStructure();
+            var bladderMinModel = new BladderminModel(ew); 
+            
+            var results = await bladderMinModel.CreateBladderMinStructure(SelectedProtocol, SelectedBladderContour, SelectedPlanSum);
             
             if (!results.Success)
             {
@@ -217,9 +222,9 @@ namespace VMS.TPS
             else
             {
                 ConstraintValuesList = results.ProtocolResult.ConstraintResults.Select(x=>x.Volume.ToString("0.##")).ToList();
-                BlaMinVol = results.BladderMinVol.ToString("0.##");
-                SupMargin = results.SupMargin.ToString();
-                AntMargin = results.AntMargin.ToString();
+                BlaMinVol = results.ProtocolResult.BladderMinVolume.ToString("0.##");
+                SupMargin = results.MarginResult.TotalSupMargin.ToString();
+                AntMargin = results.MarginResult.TotalAntMargin.ToString();
             }
 
             //Closing statements
