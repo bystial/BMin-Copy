@@ -35,7 +35,6 @@ namespace BladderMin
         public double minVolumeConstraint { get; set; } = 80;
         public bool isNodesTreatable { get; set; } = true;
         public bool isMultiPhase { get; set; } = false;
-
         private bool _isNodesSelected = false;
 
         public DoseValue LowDoseConstraintValue
@@ -51,7 +50,7 @@ namespace BladderMin
 
         public BladderMinProtocolTypes ProtocolType { get; private set; }
 
-        //A method to indicated whether nodes have been selected by the user and updates the protocol constraints as necessary
+        //A method to indicate whether nodes have been selected by the user and updates the protocol constraints as necessary
         public void SetNodesSelected(bool isNodesSelected)
         {
             _isNodesSelected = isNodesSelected;
@@ -69,6 +68,7 @@ namespace BladderMin
             var protocolConstraintsAreMet = constraintResults.All(x => x.IsMet) && s.Volume > minVolumeConstraint;
             return new ProtocolResult(protocolConstraintsAreMet, s.Volume, constraintResults);
         }
+
         //Sets the constraints depending on the protocol selected and whether nodes are selected or not.
         private void SetContraints()
         {
@@ -133,7 +133,7 @@ namespace BladderMin
                         isNodesTreatable = false;
                         ProtocolConstraints = new List<BladderConstraint>
                         {
-                             new BladderConstraint("V36 ≤ 10%", new DoseValue(3600, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 10),
+                            new BladderConstraint("V36 ≤ 10%", new DoseValue(3600, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 10),
                             new BladderConstraint("V33 ≤ 20%", new DoseValue(3300, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 20),
                             new BladderConstraint("V18 ≤ 45%", new DoseValue(1800, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 45),
                         };

@@ -16,7 +16,7 @@ using BladderMin;
 
 namespace VMS.TPS
 {
-    //Methods and classes that help do things to simplify code
+    //Methods and classes that help do things to that are not necessarily tied to specific clinical logic
     public static class Helpers
     {
         //A class for logging errors and exceptions into a log file that can then be read by the user.
@@ -43,9 +43,7 @@ namespace VMS.TPS
                     Log.Error(ex, logInfo);
             }
         }
-
-        //Creates a Low Dose Isodose structure used to determine overlap with prescription dose into the bladder.
-       
+      
          //Checks if a structure already exists.
         public static bool CheckStructureExists(PlanSetup planSetup, string structureId)
         {
@@ -57,7 +55,7 @@ namespace VMS.TPS
         }
 
         //Converts inner margins to align with Patient Orientation
-        public static AxisAlignedMargins ConvertMargins(PatientOrientation patientOrientation, StructureMarginGeometry geometry, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
+        public static AxisAlignedMargins ConvertInnerMargins(PatientOrientation patientOrientation, StructureMarginGeometry geometry, double rightMargin, double antMargin, double infMargin, double leftMargin, double postMargin, double supMargin)
         {
             switch (patientOrientation)
             {

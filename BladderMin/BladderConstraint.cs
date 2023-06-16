@@ -3,7 +3,6 @@ using VMS.TPS.Common.Model.Types;
 
 namespace BladderMin
 {
-    
     public struct BladderConstraintResult
     {
         public bool IsMet { get; set; }
@@ -23,6 +22,8 @@ namespace BladderMin
             ConstraintVolumeRepresentation = volumePresentation;
             ConstraintVolume = constraintVolume;
         }
+
+        //A tuple to store a the bladdermin volume and whether it is less than the minimum volume constraint or not.
         public (bool, double) GetVolumeAtConstraint(PlanningItem p, Structure s)
         {
             var vol = p.GetVolumeAtDose(s, Dose, ConstraintVolumeRepresentation);

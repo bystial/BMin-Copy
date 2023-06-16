@@ -67,10 +67,10 @@ namespace BladderMin
             _runningAntMargin = _currentAntMargin;
             return (maxInternalMarginReached);
         }
-        public void SetStartParameters(BladderMinMarginInitializationParameters startParameters)
-        {
-            _startParameters = startParameters;
-        }
+        //public void SetStartParameters(BladderMinMarginInitializationParameters startParameters) //This has 0 references, do we need it?
+        //{
+        //    _startParameters = startParameters;
+        //}
 
         public BladderMinMarginResults GetCurrentMargins()
         {
@@ -86,12 +86,12 @@ namespace BladderMin
 
         public AxisAlignedMargins GenerateAxisAlignedInnerMargins(PatientOrientation o)
         {
-            return Helpers.ConvertMargins(o, StructureMarginGeometry.Inner,  0, _currentAntMargin, 0, 0, 0, _currentSupMargin);
+            return Helpers.ConvertInnerMargins(o, StructureMarginGeometry.Inner,  0, _currentAntMargin, 0, 0, 0, _currentSupMargin);
         }
 
         public AxisAlignedMargins GenerateAxisAlignedInfSmoothingMargins(PatientOrientation o)
         {
-            return Helpers.ConvertMargins(o, StructureMarginGeometry.Outer, 0, 0, _startParameters.InfMarginSmoothingMargin, 0, 0, 0);
+            return Helpers.ConvertInnerMargins(o, StructureMarginGeometry.Outer, 0, 0, _startParameters.InfMarginSmoothingMargin, 0, 0, 0);
         }
 
     }
@@ -298,8 +298,8 @@ namespace BladderMin
                 lowDoseIso.ConvertToHighResolution();
             }
             //smooth low dose structure
-            var aaSmoothOut = Helpers.ConvertMargins(orientation, StructureMarginGeometry.Outer, 20, 20, 20, 20, 20, 20);
-            var aaSmoothIn = Helpers.ConvertMargins(orientation, StructureMarginGeometry.Inner, 20, 20, 20, 20, 20, 20);
+            var aaSmoothOut = Helpers.ConvertInnerMargins(orientation, StructureMarginGeometry.Outer, 20, 20, 20, 20, 20, 20);
+            var aaSmoothIn = Helpers.ConvertInnerMargins(orientation, StructureMarginGeometry.Inner, 20, 20, 20, 20, 20, 20);
 
             lowDoseIso.SegmentVolume = lowDoseIso.AsymmetricMargin(aaSmoothOut).AsymmetricMargin(aaSmoothIn).And(bladder.SegmentVolume);
 

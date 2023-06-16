@@ -27,6 +27,7 @@ namespace VMS.TPS
         public ObservableCollection<string> PlanSumList { get; private set; } = new ObservableCollection<string>(); //{"DesignPlan1", "DesignPlan2" };
         public ObservableCollection<string> StructureList { get; private set; } = new ObservableCollection<string>(); //{ "Design1", "Design2", "Design3" };
         public string SelectedBladderContour { get; set; } = "Bladder";
+        public string SelectedPlanSum { get; set; }
         public List<Protocol> ProtocolList { get; private set; } = new List<Protocol>();
         public List<string> ProtocolConstraintsList { get; private set; } = new List<string>() { "DesignConstraint1", "DesignConstraint2", "DesignConstraint3" };
         public List<string> ConstraintValuesList { get; private set; } = new List<string>() { "DesignConstraintVal","DesignConstraintVal2", "DesignConstraintVal3"};
@@ -48,7 +49,7 @@ namespace VMS.TPS
                 if (SelectedProtocol != null)
                 {
                     SelectedProtocol.SetNodesSelected(_isNodesSelected);
-                    ProtocolConstraintsList = SelectedProtocol.ProtocolConstraints.Select(x => x.Name).ToList(); // Kludge - NC
+                    ProtocolConstraintsList = SelectedProtocol.ProtocolConstraints.Select(x => x.Name).ToList(); // Kludge - NC <-- Ask Nick?
                 }
             }
         }
@@ -99,7 +100,8 @@ namespace VMS.TPS
                     return Visibility.Collapsed;
             }
         }
-        public string SelectedPlanSum { get; set; }
+
+        //Variables to store script results to the GUI
         public string BlaMinVol { get; set; }
         public string SupMargin { get; set; }
         public string AntMargin { get; set; }
@@ -134,7 +136,6 @@ namespace VMS.TPS
             {
                 string currentStructureSetId = "";
                 string currentPlanId = "";
-                List<string> plans = new List<string>();
                 List<string> planSums = new List<string>();
                 List<string> structures = new List<string>();
                 ProtocolConstraintsList.Clear(); // clear design time parameters;
@@ -159,7 +160,6 @@ namespace VMS.TPS
                     //Get basic patient information and initialize drop down menu variables.
                     currentStructureSetId = pl.StructureSet.Id;
                     currentPlanId = pl.Id;
-                    plans = pl.Course.PlanSetups.Select(x => x.Id).ToList();
                     planSums = pl.Course.PlanSums.Select(x => x.Id).ToList();
                     structures = pl.StructureSet.Structures.Select(x => x.Id).ToList();
                     foreach (string structureId in structures)
