@@ -221,10 +221,10 @@ namespace VMS.TPS
             }
             else
             {
-                ConstraintValuesList = results.ProtocolResult.ConstraintResults.Select(x=>x.Volume.ToString("0.##")).ToList();
+                ConstraintValuesList = results.ProtocolResult.ConstraintResults.Select(x=>x.Volume.ToString("0.#")).ToList();
                 BlaMinVol = results.ProtocolResult.BladderMinVolume.ToString("0.##");
-                SupMargin = results.MarginResult.TotalSupMargin.ToString();
-                AntMargin = results.MarginResult.TotalAntMargin.ToString();
+                SupMargin = results.MarginResult.TotalSupMargin.ToString("0.#");
+                AntMargin = results.MarginResult.TotalAntMargin.ToString("0.#");
             }
 
             //Closing statements
