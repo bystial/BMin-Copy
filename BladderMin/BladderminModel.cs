@@ -233,6 +233,9 @@ namespace BladderMin
                     ProtocolResult lastAcceptableBladderMinResult = new ProtocolResult();
                     BladderMinMarginResults lastAcceptableMarginResult = new BladderMinMarginResults();
 
+                    lastAcceptableBladderMinResult = protocol.EvaluateBladderMin(planningItem, bladderMinTest);
+                    lastAcceptableMarginResult = bladderMinMargins.GetCurrentMargins(); 
+
                     //---------------------------------------------------------------------------------------------------------------------------------
                     //Initiate volume reduction loop based on volume constraints at each iteration being met.
 
@@ -259,10 +262,11 @@ namespace BladderMin
                         var protocolResult = protocol.EvaluateBladderMin(planningItem, bladderMinTest);
                         keepShrinking = protocolResult.IsMet;
 
+                        // THis is where it crashed after 1 iteration if dose constraints fail because this never gets initialized.
                         if (keepShrinking) // include the last acceptable bladdermin reductions in the total margins
                         {
                             lastAcceptableBladderMinResult = protocolResult;
-                            lastAcceptableMarginResult = bladderMinMargins.GetCurrentMargins();
+                            lastAcceptableMarginResult = bladderMinMargins.GetCurrentMargins(); 
                         }
 
                     }

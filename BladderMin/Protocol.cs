@@ -107,6 +107,26 @@ namespace BladderMin
                         break;
 
                     }
+                case BladderMinProtocolTypes.Prostate66in33:
+                    {
+                        Name = "Prostate 66 Gy in 33#";
+                        ProtocolConstraints = new List<BladderConstraint>
+                        {
+                            new BladderConstraint("V68 ≤ 25%", new DoseValue(6500, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 25),
+                        };
+                        if (_isNodesSelected) //Toggle box for nodal coverage
+                        {
+                            ProtocolConstraints.Add(new BladderConstraint("V58 ≤ 50%", new DoseValue(5600, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 50));
+                            SeriLog.AddLog(string.Format("Protocol selected: Prostate 60 Gy in 33#  \n Nodes treated: Y"));
+                        }
+                        else
+                        {
+                            ProtocolConstraints.Add(new BladderConstraint("V49 ≤ 50%", new DoseValue(4700, DoseValue.DoseUnit.cGy), VolumePresentation.Relative, 50));
+                            SeriLog.AddLog(string.Format("Protocol selected: Prostate 66 Gy in 30#  \n Nodes treated: N"));
+                        }
+                        break;
+
+                    }
                 case BladderMinProtocolTypes.Prostate78in39:
                     {
                         Name = "Prostate 78 Gy in 39# (2 phase)";
