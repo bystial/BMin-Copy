@@ -145,7 +145,8 @@ namespace VMS.TPS
                 List<BladderMinProtocolTypes> protocolOptions = new List<BladderMinProtocolTypes>()
                 {
                     BladderMinProtocolTypes.Prostate60in20,
-                    BladderMinProtocolTypes.Prostate66in33,
+                    BladderMinProtocolTypes.Prostate66in33_single,
+                    BladderMinProtocolTypes.Prostate66in33_2phase,
                     BladderMinProtocolTypes.Prostate70in28,
                     BladderMinProtocolTypes.Prostate78in39,
                     BladderMinProtocolTypes.ProstateSABR

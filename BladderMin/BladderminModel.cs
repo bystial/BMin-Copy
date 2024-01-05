@@ -262,7 +262,6 @@ namespace BladderMin
                         var protocolResult = protocol.EvaluateBladderMin(planningItem, bladderMinTest);
                         keepShrinking = protocolResult.IsMet;
 
-                        // THis is where it crashed after 1 iteration if dose constraints fail because this never gets initialized.
                         if (keepShrinking) // include the last acceptable bladdermin reductions in the total margins
                         {
                             lastAcceptableBladderMinResult = protocolResult;
