@@ -241,7 +241,7 @@ namespace BladderMin
 
                     while (keepShrinking)
                     {
-                        bladderMin.SegmentVolume = bladderMinTest.SegmentVolume; // Set bladdermin to result of previous succesful test;
+                        bladderMin.SegmentVolume = bladderMinTest.SegmentVolume; // Set bladdermin to result of previous successful test;
 
                         bool internalMarginLimitReached = bladderMinMargins.IncrementMargins(); // increment margins and determine if internal margin limit has been reached.
 
@@ -325,5 +325,5 @@ namespace BladderMin
             bladderMin.SegmentVolume = bladderMin.SegmentVolume.Or(currentBladder.SegmentVolume.And(lowDoseOverlap));
         }
 
-    }
+    } 
 }
