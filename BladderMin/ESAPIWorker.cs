@@ -11,85 +11,115 @@ using VMS.TPS.Common.Model.Types;
 
 namespace VMS.TPS
 {
-    public class EsapiWorker 
+    public class EsapiWorker
     {
-        private readonly PlanSetup _pl;
-        private readonly StructureSet _ss;
-        private readonly Patient _p;
-        private readonly Application _app;
-        private readonly Dispatcher _dispatcher;
-        
-        public EsapiWorker(PlanSetup pl, Patient p, Application app)
+        private readonly IEsapiWorker imp;
+        public EsapiWorker(IEsapiWorker imp)
         {
-            if (app != null)
-                _app = app;
-            _pl = pl;
-            _ss = pl.StructureSet;
-            _p = p;
-            _dispatcher = Dispatcher.CurrentDispatcher;
-        }
-        public EsapiWorker(PlanSetup pl, Patient p)
-        {
-            _pl = pl;
-            _ss = pl.StructureSet;
-            _p = p;
-            _dispatcher = Dispatcher.CurrentDispatcher;
-        }
-        public EsapiWorker(StructureSet ss, Patient p)
-        {
-            _ss = ss;
-            _p = p;
-            _dispatcher = Dispatcher.CurrentDispatcher;
-        }
-        public EsapiWorker(StructureSet ss, Patient p, Application app)
-        {
-            if (app != null)
-                _app = app;
-            _ss = ss;
-            _p = p;
-            _dispatcher = Dispatcher.CurrentDispatcher;
+            this.imp = imp;
         }
         public void Run(Action<PlanSetup> a)
         {
-            _dispatcher.BeginInvoke(a, _pl);
+            imp.Run(a);
         }
         public void Run(Action<Patient, PlanSetup> a)
         {
-            _dispatcher.BeginInvoke(a, _p, _pl);
+            imp.Run(a);
         }
-
         public bool RunStructure(Action<StructureSet> a)
         {
-            _dispatcher.Invoke(a, _ss);
+            imp.RunStructure(a);
             return true;
         }
-
         public async Task<bool> AsyncRun(Action<Patient, PlanSetup> a)
         {
-            await _dispatcher.BeginInvoke(a, _p, _pl);
+            await imp.AsyncRun(a);
             return true;
         }
-
         public async Task<bool> AsyncRun(Action<Patient, PlanSetup, Application> a)
         {
-            await _dispatcher.BeginInvoke(a, _p, _pl, _app);
+            await imp.AsyncRun(a);
             return true;
         }
-
         public delegate void D(Patient p, StructureSet s);
         public async Task<bool> AsyncRunStructureContext(Action<Patient, StructureSet> a)
         {
-            await _dispatcher.BeginInvoke(a, _p, _ss);
+            await imp.AsyncRunStructureContext(a);
+            return true;
+        }
+        public async Task<bool> AsyncAppRun(Action<Application> a)
+        {
+            await imp.AsyncAppRun(a);
+            return true;
+        }
+    }
+    public class EsapiWorker_Default : IEsapiWorker
+    {
+        private PlanSetup pl;
+        private StructureSet ss;
+        private Patient p;
+        private Application app;
+        private Dispatcher dispatcher;
+        public PlanSetup PS
+        {
+            get { return pl; }
+            set { pl = value; }
+        }
+        public StructureSet SS
+        {
+            get { return ss; }
+            set { ss = value; }
+        }
+        public Patient P
+        {
+            get { return p; }
+            set { p = value; }
+        }
+        public Application App
+        {
+            get { return app; }
+            set { app = value; }
+        }
+        public Dispatcher Dispatcher
+        {
+            get { return dispatcher; }
+            set { dispatcher = value; }
+        }
+        public void Run(Action<PlanSetup> a)
+        {
+            dispatcher.BeginInvoke(a, p);
+        }
+        public void Run(Action<Patient, PlanSetup> a)
+        {
+            dispatcher.BeginInvoke(a, p, pl);
+        }
+        public bool RunStructure(Action<StructureSet> a)
+        {
+            dispatcher.Invoke(a, pl);
+            return true;
+        }
+        public async Task<bool> AsyncRun(Action<Patient, PlanSetup> a)
+        {
+            await dispatcher.BeginInvoke(a, p, pl);
+            return true;
+        }
+        public async Task<bool> AsyncRun(Action<Patient, PlanSetup, Application> a)
+        {
+            await dispatcher.BeginInvoke(a, p, pl, app);
+            return true;
+        }
+        public delegate void D(Patient p, StructureSet s);
+        public async Task<bool> AsyncRunStructureContext(Action<Patient, StructureSet> a)
+        {
+            await dispatcher.BeginInvoke(a, p, ss);
             //var D = new SendOrPostCallback(_ => a(_p, _ss));
             //_context.Send(D, null);
             return true;
         }
-
         public async Task<bool> AsyncAppRun(Action<Application> a)
         {
-            await _dispatcher.BeginInvoke(a, _app);
+            await dispatcher.BeginInvoke(a, pl);
             return true;
         }
-
-   }
+    }
 }

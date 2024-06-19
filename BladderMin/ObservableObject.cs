@@ -5,19 +5,32 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace VMS.TPS
-{
-    public abstract class ObservableObject : INotifyPropertyChanged
+{public class ObservableObject
+    {
+        private readonly IObservableObject obsObj;
+        public ObservableObject(IObservableObject obsObj)
+        {
+            this.obsObj = obsObj;
+        }
+        public void OnPropertyChanged(string propertyName)
+        {
+            obsObj.OnPropertyChanged(propertyName);
+        }
+        public void RaisePropertyChangedEvent([CallerMemberName] string propertyName = null)
+        {
+            obsObj.OnPropertyChanged(propertyName);
+        }
+    }
+    public class ObservableObject_Default : IObservableObject
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propertyName)
+        public void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-        protected void RaisePropertyChangedEvent([CallerMemberName] string propertyName = null)
+        public void RaisePropertyChangedEvent([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-                
     }
 }

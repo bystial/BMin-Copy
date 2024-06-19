@@ -46,7 +46,13 @@ namespace VMS.TPS
             Helpers.SeriLog.Initialize(context.CurrentUser.Id);
 
             // The ESAPI worker needs to be created in the main thread
-            var esapiWorker = new EsapiWorker(context.PlanSetup, context.Patient);
+            var defImp = new EsapiWorker_Default()
+            {
+                PS = context.PlanSetup,
+                P = context.Patient
+            };
+            var esapiWorker = new EsapiWorker(defImp);
+            //var esapiWorker = new EsapiWorker(context.PlanSetup, context.Patient);
 
             // This new queue of tasks will prevent the script
             // for exiting until the new window is closed

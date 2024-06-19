@@ -12,7 +12,7 @@ using VMS.TPS.Common.Model.Types;
 
 namespace BladderMin
 {
-
+    
     public struct BladderMinMarginResults
     {
         public double SupMargin; // initial margin for superior direction, mm
@@ -37,8 +37,8 @@ namespace BladderMin
         private double _totalAntMargin = 0; //mm
         private double _runningSupMargin = 0; //mm
         private double _runningAntMargin = 0; //mm
-        private double maxInternalMargin = 50; // mm
-        private double supMarginIncrement = 1; // mm
+        private readonly double maxInternalMargin = 50; // mm
+        private readonly double supMarginIncrement = 1; // mm
 
         public BladderMinMargins()
         {
@@ -53,11 +53,11 @@ namespace BladderMin
         public bool IncrementMargins()
         {
             _currentAntMargin = Math.Ceiling((_currentSupMargin / 3));
-            _currentSupMargin = _currentSupMargin + supMarginIncrement;
+            _currentSupMargin += supMarginIncrement;
             bool maxInternalMarginReached = _currentSupMargin > maxInternalMargin;
             if (maxInternalMarginReached)
             {
-                _currentSupMargin = _currentSupMargin % (maxInternalMargin + 1); // overflow back to 1 if max internal margin reached
+                _currentSupMargin %= (maxInternalMargin + 1); // overflow back to 1 if max internal margin reached
                 _totalSupMargin += _runningSupMargin; // add running margin to total margin
                 _totalAntMargin += _runningAntMargin;
                 _runningSupMargin = 0; // reset running margins
@@ -117,14 +117,14 @@ namespace BladderMin
     public class BladderminModel
     {
         //Define properties
-        private EsapiWorker _ew;
-        private BladderMinMarginInitializationParameters _marginParameters { get; set; }
+        private readonly EsapiWorker ew;
+        private BladderMinMarginInitializationParameters MarginParameters { get; set; }
 
         //BladderminModel constructor
         public BladderminModel(EsapiWorker ew)
         {
-            _ew = ew;
-            _marginParameters = new BladderMinMarginInitializationParameters
+            this.ew = ew;
+            MarginParameters = new BladderMinMarginInitializationParameters
             {
                 InitialSupMargin = 0,
                 InitialAntMargin = 0,
@@ -136,7 +136,7 @@ namespace BladderMin
         public async Task<BladderMinCreationResults> CreateBladderMinStructure(Protocol protocol, string bladderStructureId, string planSumId = "")
         {
             BladderMinCreationResults result = new BladderMinCreationResults(false, "Method did not complete");
-            await Task.Run(() => _ew.AsyncRun((p, pl) =>
+            await Task.Run(() => ew.AsyncRun((p, pl) =>
             {
                 try
                 {
@@ -187,7 +187,7 @@ namespace BladderMin
                     }
 
                     //Create Bladdermin_AUTO structure.
-                    string bladderMinName = "Bladmin_AUTO";
+                    string bladderMinName = "Bladmin_AUTO_HL";
                     var bladderMin = pl.StructureSet.Structures.FirstOrDefault(x => x.Id == bladderMinName);
                     if (bladderMin != null)
                     {
@@ -205,7 +205,7 @@ namespace BladderMin
                     //------------------------------------------------------------------------------------------------------------------
                     // Get planning item from which to evaluate dose. This will be a sum for a multi phase protocol and a planSetup if not;
                     PlanningItem planningItem = null;
-                    if (protocol.isMultiPhase)
+                    if (protocol.IsMultiPhase)
                     {
                         planningItem = pl.Course.PlanSums.FirstOrDefault(x => x.Id.Equals(planSumId, StringComparison.CurrentCultureIgnoreCase));
                     }

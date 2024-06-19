@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<BladderminProtocol>
+	<version>1</version>
+	<ProtocolMetaData Name="Prostate (60 Gy in 20#)" NodesTreatable="true" MultiPhase="false"/>
+	<Constraints Nodes="false" multiPhase="false">
+		<Constraint Name="V60 ≤ 5%" DoseValue="6000" DoseUnit="cGy" VolumePresentaition="Relative" Volume="5"/>
+		<Constraint Name="V48 ≤ 25%" DoseValue="4800" DoseUnit="cGy" VolumePresentaition="Relative" Volume="25"/>
+		<Constraint Name="V38 ≤ 50%" DoseValue="3800" DoseUnit="cGy" VolumePresentaition="Relative" Volume="50"/>
+	</Constraints>
+	<Constraints Nodes="true" multiPhase="false">
+		<Constraint Name="V40 ≤ 5%" DoseValue="6000" DoseUnit="cGy" VolumePresentaition="Relative" Volume="5"/>
+		<Constraint Name="V38 ≤ 25%" DoseValue="4800" DoseUnit="cGy" VolumePresentaition="Relative" Volume="25"/>
+		<Constraint Name="V28 ≤ 50%" DoseValue="3800" DoseUnit="cGy" VolumePresentaition="Relative" Volume="50"/>
+	</Constraints>
+</BladderminProtocol>

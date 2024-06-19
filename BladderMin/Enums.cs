@@ -15,6 +15,5 @@ namespace VMS.TPS
         [Description("Prostate 66 Gy in 33# (2 phase)")] Prostate66in33_2phase,
         [Description("Prostate 78 Gy in 39# (2 phase)")] Prostate78in39,
         [Description("Prostate SABR 36.25 Gy in 5#")] ProstateSABR,
-
     }
 }
