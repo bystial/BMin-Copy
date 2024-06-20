@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using System.Xml;
 using System.IO;
+using System.Reflection;
+using System.Xml.Linq;
 
 namespace BladderMin
 {
     //create protocol list and activate data after selecting protocol
     public class SerializeData
     {
-        public readonly string path = $@"\\sdappvimg010\esapi$\hlowe\BladderMin\Protocols\";
+        //public readonly string path = $@"\\sdappvimg010\esapi$\hlowe\BladderMin\Protocols\";
         public List<string> ReadFolder()
         {
-            return Directory.GetFiles(path).ToList();
+            return Directory.GetFiles(configPath()).ToList();
         }
         public Protocol_Preprocessor.BladderminProtocol SerializeProtocol(string file)
         {
@@ -36,6 +38,16 @@ namespace BladderMin
             {
                 throw new Exception($@"{ex.Message}");
             }
+        }
+        public string configPath()
+        {
+            string directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string configFile = $@"{directory}\Configuration.xml";
+            var loadConfig = XDocument.Load(configFile);
+
+            //Path to protocols.
+            string protocolFolder = loadConfig.Element("Config").Element("Path").Element("Protocols").Value;
+            return protocolFolder;
         }
     }
 }

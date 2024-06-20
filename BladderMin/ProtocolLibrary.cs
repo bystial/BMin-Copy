@@ -64,7 +64,7 @@ namespace BladderMin
         {
             //instance the protocol library
             library = SetProtocols();
-            SeriLog.AddLog("tock");
+            //SeriLog.AddLog("tock");
             //instance the selected protocol
             isNodesSelected = isNodesSelectedDefault;
             ProtocolType = selectedProtocolType;
